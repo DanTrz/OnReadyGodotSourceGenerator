@@ -3,11 +3,18 @@
   "WorkspaceRootPath": "C:\\Local Documents\\Development\\Godot\\Source Generator Tests\\OnReadyGodotSourceGenerator\\samplegodotproject_onreadysourcegenerator\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{795F7702-063F-455E-9ED3-E1A9FDC8C15B}|SampleGodotProject_OnReadySourceGenerator.csproj|c:\\local documents\\development\\godot\\source generator tests\\onreadygodotsourcegenerator\\samplegodotproject_onreadysourcegenerator\\samplescene.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{795F7702-063F-455E-9ED3-E1A9FDC8C15B}|SampleGodotProject_OnReadySourceGenerator.csproj|solutionrelative:samplescene.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{CF875B2C-48DE-400B-8BDA-89A6FDD806BC}|..\\OnReadySourceGenerator\\OnReadySourceGenerator.csproj|c:\\local documents\\development\\godot\\source generator tests\\onreadygodotsourcegenerator\\onreadysourcegenerator\\onreadysourcegenerator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{CF875B2C-48DE-400B-8BDA-89A6FDD806BC}|..\\OnReadySourceGenerator\\OnReadySourceGenerator.csproj|c:\\local documents\\development\\godot\\source generator tests\\onreadygodotsourcegenerator\\onreadysourcegenerator\\onreadysourcegenerator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{795F7702-063F-455E-9ED3-E1A9FDC8C15B}|SampleGodotProject_OnReadySourceGenerator.csproj|c:\\local documents\\development\\godot\\source generator tests\\onreadygodotsourcegenerator\\samplegodotproject_onreadysourcegenerator\\samplegodotproject_onreadysourcegenerator.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{795F7702-063F-455E-9ED3-E1A9FDC8C15B}|SampleGodotProject_OnReadySourceGenerator.csproj|solutionrelative:samplegodotproject_onreadysourcegenerator.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{CF875B2C-48DE-400B-8BDA-89A6FDD806BC}|..\\OnReadySourceGenerator\\OnReadySourceGenerator.csproj|c:\\local documents\\development\\godot\\source generator tests\\onreadygodotsourcegenerator\\onreadysourcegenerator\\onreadysourcegenerator.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{795F7702-063F-455E-9ED3-E1A9FDC8C15B}|SampleGodotProject_OnReadySourceGenerator.csproj|c:\\local documents\\development\\godot\\source generator tests\\onreadygodotsourcegenerator\\samplegodotproject_onreadysourcegenerator\\samplescene.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{795F7702-063F-455E-9ED3-E1A9FDC8C15B}|SampleGodotProject_OnReadySourceGenerator.csproj|solutionrelative:samplescene.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -17,28 +24,54 @@
       "DocumentGroups": [
         {
           "DockedWidth": 285,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 3,
           "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "SampleGodotProject_OnReadySourceGenerator",
+              "DocumentMoniker": "C:\\LOCAL DOCUMENTS\\DEVELOPMENT\\GODOT\\SOURCE GENERATOR TESTS\\ONREADYGODOTSOURCEGENERATOR\\SAMPLEGODOTPROJECT_ONREADYSOURCEGENERATOR\\SampleGodotProject_OnReadySourceGenerator.csproj",
+              "RelativeDocumentMoniker": "SampleGodotProject_OnReadySourceGenerator.csproj",
+              "ToolTip": "C:\\LOCAL DOCUMENTS\\DEVELOPMENT\\GODOT\\SOURCE GENERATOR TESTS\\ONREADYGODOTSOURCEGENERATOR\\SAMPLEGODOTPROJECT_ONREADYSOURCEGENERATOR\\SampleGodotProject_OnReadySourceGenerator.csproj",
+              "RelativeToolTip": "SampleGodotProject_OnReadySourceGenerator.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAASAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2024-12-26T09:47:22.928Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "OnReadySourceGenerator",
+              "DocumentMoniker": "C:\\LOCAL DOCUMENTS\\DEVELOPMENT\\GODOT\\SOURCE GENERATOR TESTS\\ONREADYGODOTSOURCEGENERATOR\\OnReadySourceGenerator\\OnReadySourceGenerator.csproj",
+              "RelativeDocumentMoniker": "..\\OnReadySourceGenerator\\OnReadySourceGenerator.csproj",
+              "ToolTip": "C:\\LOCAL DOCUMENTS\\DEVELOPMENT\\GODOT\\SOURCE GENERATOR TESTS\\ONREADYGODOTSOURCEGENERATOR\\OnReadySourceGenerator\\OnReadySourceGenerator.csproj",
+              "RelativeToolTip": "..\\OnReadySourceGenerator\\OnReadySourceGenerator.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAARAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2024-12-26T09:46:07.325Z",
+              "EditorCaption": ""
+            },
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
               "Title": "OnReadySourceGenerator.cs",
               "DocumentMoniker": "C:\\Local Documents\\Development\\Godot\\Source Generator Tests\\OnReadyGodotSourceGenerator\\OnReadySourceGenerator\\OnReadySourceGenerator.cs",
               "RelativeDocumentMoniker": "..\\OnReadySourceGenerator\\OnReadySourceGenerator.cs",
               "ToolTip": "C:\\Local Documents\\Development\\Godot\\Source Generator Tests\\OnReadyGodotSourceGenerator\\OnReadySourceGenerator\\OnReadySourceGenerator.cs",
               "RelativeToolTip": "..\\OnReadySourceGenerator\\OnReadySourceGenerator.cs",
-              "ViewState": "AgIAAB0AAAAAAAAAAAAAwCwAAAAIAAAAAAAAAA==",
+              "ViewState": "AgIAAB0AAAAAAAAAAAAAwCUAAAARAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2024-12-26T09:34:11.12Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 3,
               "Title": "SampleScene.cs",
               "DocumentMoniker": "C:\\Local Documents\\Development\\Godot\\Source Generator Tests\\OnReadyGodotSourceGenerator\\samplegodotproject_onreadysourcegenerator\\SampleScene.cs",
               "RelativeDocumentMoniker": "SampleScene.cs",
