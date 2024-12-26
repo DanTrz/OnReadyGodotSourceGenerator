@@ -42,7 +42,7 @@ public class OnReadySourceGenerator : ISourceGenerator
     public void Initialize(GeneratorInitializationContext context)
     {   
         //DEBUGGER: Uncomment this line to run a debugger and navigate the code.
-        if (!Debugger.IsAttached) Debugger.Launch();
+        //if (!Debugger.IsAttached) Debugger.Launch();
 
         // Register a syntax receiver to capture field declarations with the OnReadyAttribute (Custom syntax receiver)
         context.RegisterForSyntaxNotifications(() => new OnReadySyntaxReceiver());

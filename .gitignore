@@ -16,3 +16,5 @@ data_*/
 mono_crash.*.json
 bin/
 obj/
+/samplegodotproject_onreadysourcegenerator/.vs
+/samplegodotproject_onreadysourcegenerator/.vs
