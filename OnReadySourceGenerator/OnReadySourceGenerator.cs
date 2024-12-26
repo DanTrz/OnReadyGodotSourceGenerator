@@ -1,6 +1,4 @@
-﻿/*************  ✨ Codeium Command 🌟  *************/
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis;
@@ -33,7 +31,7 @@ public class OnReadySourceGenerator : ISourceGenerator
         //// This will get the current TOP LEVEL PROJECT directory
         //string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName +"/";
 
-        string projectDirectory = "C:\\Local Documents\\Development\\Godot\\Source Generator Tests\\ProjectBoostTraining\\projectboosttraining3d\\.godot\\mono\\temp\\";
+        string projectDirectory = "C:\\Local Documents\\Development\\Godot\\Source Generator Tests\\OnReadyGodotSourceGenerator\\samplegodotproject_onreadysourcegenerator\\.godot\\mono\\temp\\";
         return projectDirectory; 
     }
 
@@ -44,7 +42,7 @@ public class OnReadySourceGenerator : ISourceGenerator
     public void Initialize(GeneratorInitializationContext context)
     {   
         //DEBUGGER: Uncomment this line to run a debugger and navigate the code.
-        //if (!Debugger.IsAttached) Debugger.Launch();
+        if (!Debugger.IsAttached) Debugger.Launch();
 
         // Register a syntax receiver to capture field declarations with the OnReadyAttribute (Custom syntax receiver)
         context.RegisterForSyntaxNotifications(() => new OnReadySyntaxReceiver());
@@ -113,7 +111,7 @@ public class OnReadySourceGenerator : ISourceGenerator
         }
 
         //Debug and Log
-        //File.AppendAllText($@"{SaveFilePath()}{"MasterLog"}", "Total OnReady Declaration Count: " + receiver.Fields.Count().ToString() + "\r\n");
+        File.AppendAllText($@"{SaveFilePath()}{"MasterLog"}", "Total OnReady Declaration Count: " + receiver.Fields.Count().ToString() + "\r\n");
 
         var modePathString = string.Empty;
         var filedTypeString = string.Empty;

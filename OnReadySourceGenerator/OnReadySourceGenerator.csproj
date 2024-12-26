@@ -7,8 +7,8 @@
 		<TargetFramework>netstandard2.0</TargetFramework>
 		<LangVersion>latest</LangVersion>
 		<Nullable>enable</Nullable>
-		<AssemblyName>DanTorrez.OnReadySourceGenerator</AssemblyName>
-		<RootNamespace>DanTorrez.SourceGenerator</RootNamespace>
+		<AssemblyName>OnReadySourceGenerator</AssemblyName>
+		<RootNamespace>SourceGenerator</RootNamespace>
 	</PropertyGroup>
 
 
