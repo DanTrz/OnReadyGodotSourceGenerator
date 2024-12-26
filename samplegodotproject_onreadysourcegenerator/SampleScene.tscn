@@ -1,0 +1,35 @@
+[gd_scene load_steps=2 format=3 uid="uid://mjak8alkf175"]
+
+[ext_resource type="Script" path="res://SampleScene.cs" id="1_8r2ad"]
+
+[node name="SampleScene" type="Node2D"]
+script = ExtResource("1_8r2ad")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="PanelContainer" type="PanelContainer" parent="CanvasLayer"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -252.5
+offset_top = -166.0
+offset_right = 252.5
+offset_bottom = 166.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/PanelContainer"]
+layout_mode = 2
+
+[node name="LabelUniqueName" type="Label" parent="CanvasLayer/PanelContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Node not initiated - Unique Name (%)"
+
+[node name="LabelNotUniqueName" type="Label" parent="CanvasLayer/PanelContainer/VBoxContainer"]
+layout_mode = 2
+text = "Node not initiated - Not Unique Name "
