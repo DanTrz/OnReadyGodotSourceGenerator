@@ -23,7 +23,7 @@ To test this, you can get the entire code in this repo and there is a test Godot
 
 At the moment, the Godot Game Project needs to manually reference the Source Generator Project: [OnReadySourceGenerator](https://github.com/DanTrz/OnReadyGodotSourceGenerator/tree/main/OnReadySourceGenerator)
 
-If you downaload or get the entire code, it should all be setup for testing. I will create a NuGet Package in the future.
+If you downaload or get the entire code with all folders, it should all be setup for testing. I will create a NuGet Package in the future.
 
 This solution was done using my own code and the approach is a simple one that only does one purpose.
 
