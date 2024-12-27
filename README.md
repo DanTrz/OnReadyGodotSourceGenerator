@@ -6,14 +6,17 @@ This repo contains a simplified solution to resolve fields in Godot using C# by 
 
 To resolve the Nodes, you can use one of the approaches below:
 
-* Approach #1 - Using AutoLoaad  That should auto-resolve each node, as they are added to the SceneTree. This is done by 
-
+* Approach #1 - Using AutoLoaad  That should auto-resolve each node, as they are added to the SceneTree. This is done by following two steps:
+    * - 1 => Make sure you add the script "GlobalAutoLoad" as an AutoLoad in Godot.
+      - 2 => Use a decorator Root scene to instantiate the real main scene of the game. You should add the decorator root scene to your project Run > Main Scene.
+            - this approach is needed due to a Godot Issue => @see  https://github.com/godotengine/godot/issues/37813
+        Example on how your decorator Root Scene should look:
+        ![image](https://github.com/user-attachments/assets/3e99e206-9820-42d9-92fc-0a80023a3453)
 
 
 * Approach #2 - Manually add this code, "this.OnReady(this)" to each node within the _Ready() method.
          Example:
          ![image](https://github.com/user-attachments/assets/02c96839-d3d8-4a8c-9676-e0ec06ca247f)
-
 
 
 This solution was done using my own code and the approach is a simple one that only does one purpose.
