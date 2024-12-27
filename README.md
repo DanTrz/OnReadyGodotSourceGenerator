@@ -22,6 +22,9 @@ To resolve the Nodes, you can use one of the approaches below:
 To test this, you can get the entire code in this repo and there is a test Godot Game Project in the folder: [GodotGameSampleProject](https://github.com/DanTrz/OnReadyGodotSourceGenerator/tree/main/samplegodotproject_onreadysourcegenerator)
 
 At the moment, the Godot Game Project needs to manually reference the Source Generator Project: [OnReadySourceGenerator](https://github.com/DanTrz/OnReadyGodotSourceGenerator/tree/main/OnReadySourceGenerator)
+Example:
+![image](https://github.com/user-attachments/assets/cc61bca9-1117-4c2d-92aa-787c8a3faa02)
+
 
 If you downaload or get the entire code with all folders, it should all be setup for testing. I will create a NuGet Package in the future.
 
