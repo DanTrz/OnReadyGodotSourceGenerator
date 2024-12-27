@@ -7,7 +7,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\OnReadySourceGenerator\OnReadySourceGenerator.csproj"
-	                  OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="true" />
+	                  OutputItemType="Analyzer"/>
   </ItemGroup>
 </Project>

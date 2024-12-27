@@ -15,6 +15,10 @@ run/main_scene="res://SampleScene.tscn"
 config/features=PackedStringArray("4.3", "C#", "Forward Plus")
 config/icon="res://icon.svg"
 
+[autoload]
+
+GlobalAutoLoad="*res://GlobalAutoLoad.cs"
+
 [dotnet]
 
 project/assembly_name="SampleGodotProject_OnReadySourceGenerator"

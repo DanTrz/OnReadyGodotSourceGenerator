@@ -7,8 +7,9 @@ public partial class SampleScene : Node2D
     [OnReady("CanvasLayer/PanelContainer/VBoxContainer/LabelNotUniqueName")] private Label _NotUniqueNameLabel;
 
     public override void _Ready()
-	{ 
-		this.OnReady(this);
+	{
+        GD.PrintT("Node _Ready) called: " + this.Name);
+        //this.OnReady(this);
         _UniqueNameLabel.Text = "Initiated via OnReady - Working - Unique name Node";
         _NotUniqueNameLabel.Text = "Initiated via OnReady - Working - Not Unique name Node";
 
