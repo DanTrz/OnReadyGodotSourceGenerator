@@ -19,6 +19,12 @@ To resolve the Nodes, you can use one of the approaches below:
          ![image](https://github.com/user-attachments/assets/02c96839-d3d8-4a8c-9676-e0ec06ca247f)
 
 
+To test this, you can get the entire code in this repo and there is a test Godot Game Project in the folder: [GodotGameSampleProject](https://github.com/DanTrz/OnReadyGodotSourceGenerator/tree/main/samplegodotproject_onreadysourcegenerator)
+
+At the moment, the Godot Game Project needs to manually reference the Source Generator Project: [OnReadySourceGenerator](https://github.com/DanTrz/OnReadyGodotSourceGenerator/tree/main/OnReadySourceGenerator)
+
+I will create a NuGet Package in the future.
+
 This solution was done using my own code and the approach is a simple one that only does one purpose.
 
 This was inspired by other solutions from:
