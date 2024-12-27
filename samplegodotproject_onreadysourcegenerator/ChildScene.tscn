@@ -1,0 +1,18 @@
+[gd_scene load_steps=2 format=3 uid="uid://nobb6gvy0n6q"]
+
+[ext_resource type="Script" path="res://ChildScene.cs" id="1_l3tnm"]
+
+[node name="ChildScene" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_l3tnm")
+
+[node name="LabelFromChildScene" type="Label" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "Node not initiated - Not Unique Name - From ChildScene"

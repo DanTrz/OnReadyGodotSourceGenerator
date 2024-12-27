@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://mjak8alkf175"]
+[gd_scene load_steps=3 format=3 uid="uid://mjak8alkf175"]
 
 [ext_resource type="Script" path="res://SampleScene.cs" id="1_8r2ad"]
+[ext_resource type="PackedScene" uid="uid://nobb6gvy0n6q" path="res://ChildScene.tscn" id="2_qdihn"]
 
 [node name="SampleScene" type="Node2D"]
 script = ExtResource("1_8r2ad")
@@ -33,3 +34,6 @@ text = "Node not initiated - Unique Name (%)"
 [node name="LabelNotUniqueName" type="Label" parent="CanvasLayer/PanelContainer/VBoxContainer"]
 layout_mode = 2
 text = "Node not initiated - Not Unique Name "
+
+[node name="SeparateScene" parent="CanvasLayer/PanelContainer/VBoxContainer" instance=ExtResource("2_qdihn")]
+layout_mode = 2

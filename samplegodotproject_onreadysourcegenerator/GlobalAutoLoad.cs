@@ -1,6 +1,5 @@
 using Godot;
 using System;
-using System.Linq;
 
 public partial class GlobalAutoLoad : Node
 {
@@ -11,15 +10,18 @@ public partial class GlobalAutoLoad : Node
         // Listen for new nodes added to the scene tree
         GetTree().NodeAdded += OnNodeAdded;
 
-        // Resolver needs to be executed for all nodes already in the scene tree (auto-load nodes)
+        //Resolver needs to be executed for all nodes already in the scene tree(auto - load nodes)
         foreach (var node in GetTree().Root.GetChildren())
-        {
-            OnNodeAdded(node);
-        }
+            {
+                OnNodeAdded(node);
+            }
     }
 
     private void OnNodeAdded(Node node)
     {
+        // Get the runtime type of the node
+        var nodeName = node.Name.ToString(); ;
+
         // Get the runtime type of the node
         var nodeType = node.GetType();;
 
