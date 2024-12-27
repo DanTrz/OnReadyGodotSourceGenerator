@@ -1,6 +1,10 @@
 using Godot;
 using System;
 
+// The resolver is not working on the main scene of the project @see https://github.com/godotengine/godot/issues/37813,
+// so we need to use a decorator Root scene to instantiate the real main scene of the game, which is covered by the injector <summary>
+// ORIGINAL SOLUTION BY: Romain Mouillard https://medium.com/@romain.mouillard.fr
+// See: https://medium.com/@romain.mouillard.fr/bringing-gdscripts-onready-magic-to-c-a-quick-custom-solution-5bae074ce799
 public partial class GlobalAutoLoad : Node
 {
     // This AutoLoad can be an alternative to writing this.OnReady(this) in every script.
