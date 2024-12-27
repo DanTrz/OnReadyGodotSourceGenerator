@@ -10,9 +10,9 @@ To resolve the Nodes, you can use one of the approaches below:
 
 
 
-
-Example:
-![image](https://github.com/user-attachments/assets/02c96839-d3d8-4a8c-9676-e0ec06ca247f)
+* Approach #2 - Manually add this code, "this.OnReady(this)" to each node within the _Ready() method.
+         Example:
+         ![image](https://github.com/user-attachments/assets/02c96839-d3d8-4a8c-9676-e0ec06ca247f)
 
 
 
