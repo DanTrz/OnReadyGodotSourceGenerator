@@ -31,7 +31,7 @@ public class OnReadySourceGenerator : ISourceGenerator
         //// This will get the current TOP LEVEL PROJECT directory
         //string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName +"/";
 
-        string projectDirectory = "C:\\Local Documents\\Development\\Godot\\Source Generator Tests\\OnReadyGodotSourceGenerator\\samplegodotproject_onreadysourcegenerator\\.godot\\mono\\temp\\";
+        string projectDirectory = "C:\\Temp\\OnReadySourceGenerator\\";
         return projectDirectory; 
     }
 
@@ -111,7 +111,7 @@ public class OnReadySourceGenerator : ISourceGenerator
         }
 
         //Debug and Log
-        File.AppendAllText($@"{SaveFilePath()}{"MasterLog"}", "Total OnReady Declaration Count: " + receiver.Fields.Count().ToString() + "\r\n");
+        //File.AppendAllText($@"{SaveFilePath()}{"MasterLog"}", "Total OnReady Declaration Count: " + receiver.Fields.Count().ToString() + "\r\n");
 
         var modePathString = string.Empty;
         var filedTypeString = string.Empty;
@@ -255,8 +255,8 @@ public class OnReadySourceGenerator : ISourceGenerator
             sourceAdded = true;
 
             //SAVE to LOG the Generated Source Code (If you want to monitor the results of the generator without debugging it)
-            File.AppendAllText($@"{SaveFilePath()}{"MasterLog"}",
-             "SOURCE:" + SourceText.From(source, Encoding.UTF8).ToString() + "\r\n" + "\r\n");
+            //File.AppendAllText($@"{SaveFilePath()}{"MasterLog"}",
+           //  "SOURCE:" + SourceText.From(source, Encoding.UTF8).ToString() + "\r\n" + "\r\n");
         }
 
         if (!sourceAdded)
