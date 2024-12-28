@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Linq;
 
 // The resolver is not working on the main scene of the project @see https://github.com/godotengine/godot/issues/37813,
 // so we need to use a decorator Root scene to instantiate the real main scene of the game, which is covered by the injector <summary>
@@ -23,11 +24,12 @@ public partial class GlobalAutoLoad : Node
 
     private void OnNodeAdded(Node node)
     {
-        // Get the runtime type of the node
-        var nodeName = node.Name.ToString(); ;
 
         // Get the runtime type of the node
-        var nodeType = node.GetType();;
+        //var nodeName = node.Name.ToString(); ;
+
+        // Get the runtime type of the node
+        var nodeType = node.GetType(); ;
 
         // Dynamically look for an "OnReady" method in the node class
         var method = nodeType?.GetMethod("OnReady");
@@ -36,7 +38,7 @@ public partial class GlobalAutoLoad : Node
         {
             // Invoke the method, passing the node itself as the parameter
             method.Invoke(node, new object[] { node });
-            GD.Print("Node resolved via AutoLoad: " +node.Name.ToString());
+            GD.Print("Node resolved via AutoLoad: " + node.Name.ToString());
         }
     }
 }

@@ -12,6 +12,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices.ComTypes;
 using System.Xml.Linq;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 
 [Generator]
 public class OnReadySourceGenerator : ISourceGenerator
@@ -31,7 +32,7 @@ public class OnReadySourceGenerator : ISourceGenerator
         //// This will get the current TOP LEVEL PROJECT directory
         //string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName +"/";
 
-        string projectDirectory = "C:\\Temp\\OnReadySourceGenerator\\";
+        string projectDirectory = "C:\\Local Documents\\Development\\Godot\\Source Generator Tests\\OnReadyGodotSourceGenerator\\samplegodotproject_onreadysourcegenerator\\.godot\\mono\\temp\\";
         return projectDirectory; 
     }
 
@@ -111,7 +112,7 @@ public class OnReadySourceGenerator : ISourceGenerator
         }
 
         //Debug and Log
-        //File.AppendAllText($@"{SaveFilePath()}{"MasterLog"}", "Total OnReady Declaration Count: " + receiver.Fields.Count().ToString() + "\r\n");
+        File.AppendAllText($@"{SaveFilePath()}{"MasterLog"}", "Total OnReady Declaration Count: " + receiver.Fields.Count().ToString() + "\r\n");
 
         var modePathString = string.Empty;
         var filedTypeString = string.Empty;
@@ -125,6 +126,9 @@ public class OnReadySourceGenerator : ISourceGenerator
         // Process each field marked with OnReadyAttribute
         foreach (var field in receiver.Fields)
         {
+            // Check if the field is a field declaration, if not, go to the next field to check.
+            if (field is not FieldDeclarationSyntax fieldDeclaration) continue;
+
             var model = context.Compilation.GetSemanticModel(field.SyntaxTree);
 
             //this provides the entire class declaration, by getting the parent of the field
@@ -140,9 +144,6 @@ public class OnReadySourceGenerator : ISourceGenerator
             {
                 classSymbolsList.Add(classSymbol);
             }
-
-            // Check if the field is a field declaration, if not, go to the next field to check.
-            if (field is not FieldDeclarationSyntax fieldDeclaration) continue;
 
             // Check the variables of type fieldDelcararion and then retrive it's details
             foreach (var variable in fieldDeclaration.Declaration.Variables)
@@ -167,20 +168,18 @@ public class OnReadySourceGenerator : ISourceGenerator
                 if (filedTypeString == null) continue;
 
                 // Dict Key  = Classes // Dict Values = Fields in Classes with OnReady
-                // We check if if already have a Key for that class, otherwise we create one. 
-                if (onReadyVariablesList.ContainsKey(classNameString))
-                {
-                    onReadyVariablesList[classNameString].Add((fieldSymbolString, filedTypeString, modePathString));
-                }
-                else
+                // We check if if already have a Key for that class, otherwise we create one.
+                if (!onReadyVariablesList.ContainsKey(classNameString))
                 {
                     onReadyVariablesList.Add(classNameString, new List<(string, string, string)> {
                         (fieldSymbolString, filedTypeString, modePathString) });
                 }
+                else
+                {
+                    onReadyVariablesList[classNameString].Add((fieldSymbolString, filedTypeString, modePathString));
+                }
             }
-
         }
-
 
         //Check for Errors and add error messaages
         if (receiver.Fields.Count == 0)
@@ -254,9 +253,9 @@ public class OnReadySourceGenerator : ISourceGenerator
 
             sourceAdded = true;
 
-            //SAVE to LOG the Generated Source Code (If you want to monitor the results of the generator without debugging it)
-            //File.AppendAllText($@"{SaveFilePath()}{"MasterLog"}",
-           //  "SOURCE:" + SourceText.From(source, Encoding.UTF8).ToString() + "\r\n" + "\r\n");
+            //SAVE to LOG the Generated Source Code(If you want to monitor the results of the generator without debugging it)
+            File.AppendAllText($@"{SaveFilePath()}{"MasterLog"}",
+             "SOURCE:" + SourceText.From(source, Encoding.UTF8).ToString() + "\r\n" + "\r\n");
         }
 
         if (!sourceAdded)
@@ -290,7 +289,7 @@ public class OnReadySourceGenerator : ISourceGenerator
                         {{
                             if (node is {className} myNode)
                             {{
-                                {allFieldDelcarations}
+                                    {allFieldDelcarations}
                             }}
                         }}
                     }}
