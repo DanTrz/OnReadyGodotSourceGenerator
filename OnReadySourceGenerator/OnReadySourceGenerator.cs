@@ -13,6 +13,8 @@ using System.Runtime.InteropServices.ComTypes;
 using System.Xml.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using Microsoft.CodeAnalysis.CSharp;
+using SourceGenerator;
 
 [Generator]
 public class OnReadySourceGenerator : ISourceGenerator
@@ -75,7 +77,7 @@ public class OnReadySourceGenerator : ISourceGenerator
             // Check if the field declaration has the OnReady attribute 
             var hasOnReadyAttribute = fieldDeclaration.AttributeLists
                 .SelectMany(attrList => attrList.Attributes)
-                .Any(attr => attr.Name.ToString() == "OnReady");
+                .Any(attr => attr.Name.ToString() == Const.ONREADY);
 
             // Capture fields annotated with [OnReady]
             if (hasOnReadyAttribute)
@@ -118,10 +120,11 @@ public class OnReadySourceGenerator : ISourceGenerator
         var filedTypeString = string.Empty;
         var fieldSymbolString = string.Empty;
         var classNameString = string.Empty;
+        var intializerString = string.Empty;
         IList<INamedTypeSymbol> classSymbolsList = new List<INamedTypeSymbol>();
 
         //Dictonary to store all OnReady Variables /-/ Dic Key = ClassName /-/ Dic Value = List of OnReady Variables
-        Dictionary<string, List<(string fieldName, string fieldType, string nodePath)>> onReadyVariablesList = new();
+        Dictionary<string, List<(string fieldName, string fieldType, string nodePath, string initializer)>> onReadyVariablesList = new();
 
         // Process each field marked with OnReadyAttribute
         foreach (var field in receiver.Fields)
@@ -154,9 +157,14 @@ public class OnReadySourceGenerator : ISourceGenerator
                 //Retrives the field name / This is the variable name in Godot Script E.g. _myAudioStreamPlayer)
                 fieldSymbolString = fieldSymbol.Name.ToString();
 
+                // Retrieve the initializer expression if available (e.g., what comes after "=", like "GD.Load<PackedScene>(...)")
+                var variableInitializer = variable.Initializer;
+                intializerString = variableInitializer?.Value?.ToString() ?? string.Empty;
+                File.AppendAllText($@"{SaveFilePath()}{"MasterLog"}", "From Variable: " + variable.ToFullString() + " -> Initializer: " + intializerString + "\r\n");
+
                 // Retrieve the OnReady attribute details
                 var onReadyAttribute = fieldSymbol.GetAttributes()
-                    .FirstOrDefault(attr => attr.AttributeClass?.Name == "OnReadyAttribute");
+                    .FirstOrDefault(attr => attr.AttributeClass?.Name == Const.ONREADY_ATTRIBUTE);
                 if (onReadyAttribute == null) continue;
 
                 // Extract the NodePath - This is the path to the node within the OnReady attribute
@@ -171,12 +179,12 @@ public class OnReadySourceGenerator : ISourceGenerator
                 // We check if if already have a Key for that class, otherwise we create one.
                 if (!onReadyVariablesList.ContainsKey(classNameString))
                 {
-                    onReadyVariablesList.Add(classNameString, new List<(string, string, string)> {
-                        (fieldSymbolString, filedTypeString, modePathString) });
+                    onReadyVariablesList.Add(classNameString, new List<(string, string, string, string)> {
+                        (fieldSymbolString, filedTypeString, modePathString, intializerString) });
                 }
                 else
                 {
-                    onReadyVariablesList[classNameString].Add((fieldSymbolString, filedTypeString, modePathString));
+                    onReadyVariablesList[classNameString].Add((fieldSymbolString, filedTypeString, modePathString, intializerString));
                 }
             }
         }
@@ -225,6 +233,7 @@ public class OnReadySourceGenerator : ISourceGenerator
             string fieldName = string.Empty;
             string fieldType = string.Empty;
             string nodePath = string.Empty;
+            string initializer = string.Empty;
 
             StringBuilder tempAllNodeDeclarations = new();
 
@@ -234,17 +243,57 @@ public class OnReadySourceGenerator : ISourceGenerator
                 fieldName = onReadyfield.fieldName;
                 fieldType = onReadyfield.fieldType;
                 nodePath = onReadyfield.nodePath;
+                initializer = onReadyfield.initializer;
 
-                //Create the node declaration string with the GetNode method and Error Handler
-                tempAllNodeDeclarations.Append($@"myNode.{fieldName} = node.GetNode<{fieldType}>(""{nodePath}"");");
-                tempAllNodeDeclarations.Append("\n");
-                tempAllNodeDeclarations.Append($@"
+
+                if (!string.IsNullOrEmpty(initializer) && nodePath.StartsWith(Const.INITIALIZER_SYMBOL))
+                {
+     
+                    //Create the node declaration string with the GetNode method and Error Handler
+                    tempAllNodeDeclarations.Append($@"myNode.{fieldName} = {initializer};");
+                    tempAllNodeDeclarations.Append("\n");
+                    tempAllNodeDeclarations.Append($@"
                     if ({fieldName} == null || myNode.{fieldName} == null)
                     {{
-                        GD.PrintErr(""Could not resolve OnReady member:{fieldName}      NodePath:{nodePath}     Class:{className}."");
+                        GD.PrintErr(""ONREADYSG201: Could not resolve OnReady member:{fieldName} Class:{className}  Check if special $ symbol was added or if path is incorrect"");
+                        GD.PrintErr(""Fields or Variables with Initializer require special $ symbol, e.g. [OnReady({Const.INITIALIZER_SYMBOL})] "");
                     }}
-                ");
-                tempAllNodeDeclarations.Append("\n");
+                    ");
+                    
+                    tempAllNodeDeclarations.Append("\n");
+                }
+                else if (!string.IsNullOrEmpty(initializer))
+                {
+                    //Create the node declaration string with the GetNode method and Error Handler
+                    tempAllNodeDeclarations.Append($@"myNode.{fieldName} = {initializer};");
+                    tempAllNodeDeclarations.Append("\n");
+                    tempAllNodeDeclarations.Append($@"
+                    if ({fieldName} == null || myNode.{fieldName} == null)
+                    {{
+                        GD.PrintErr(""ONREADYSG202: Could not resolve OnReady member:{fieldName} Class:{className}  Check if special $ symbol was added or if path is incorrect"");
+                        GD.PrintErr(""Fields or Variables with Initializer require special $ symbol, e.g. [OnReady({Const.INITIALIZER_SYMBOL})] "");
+                    }}
+                    ");
+
+                    tempAllNodeDeclarations.Append("\n");
+                }
+                else 
+                {
+                    //Create the node declaration string with the GetNode method and Error Handler
+                    tempAllNodeDeclarations.Append($@"myNode.{fieldName} = node.GetNode<{fieldType}>(""{nodePath}"");");
+                    tempAllNodeDeclarations.Append("\n");
+                    tempAllNodeDeclarations.Append($@"
+                    if ({fieldName} == null || myNode.{fieldName} == null)
+                    {{
+                        GD.PrintErr(""ONREADYSG203: Could not resolve OnReady member:{fieldName}  NodePath:{nodePath}  Class:{className}."");
+                    }}
+                    ");
+                    
+                    tempAllNodeDeclarations.Append("\n");
+
+                }
+
+
             }
 
             //final source code generation method and then we add it to the context to be compiled

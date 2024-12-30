@@ -8,7 +8,7 @@ public partial class ChildScene : Control
 
     //public override void _Notification(int what) => this.OnReady(this);
 
-    [OnReady("..")] private Node? _myParent; //Using.. = Parent Node
+    [OnReady("..")] private Node _myParent; //Using.. = Parent Node
 
 
     public override void _Ready()

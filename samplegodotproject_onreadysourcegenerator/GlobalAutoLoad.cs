@@ -26,7 +26,7 @@ public partial class GlobalAutoLoad : Node
     {
 
         // Get the runtime type of the node
-        //var nodeName = node.Name.ToString(); ;
+        var nodeName = node.Name.ToString(); ;
 
         // Get the runtime type of the node
         var nodeType = node.GetType(); ;
