@@ -332,7 +332,7 @@ public class OnReadySourceGenerator : ISourceGenerator
                 using Godot;
                 using System;
 
-                    partial class {className}
+                    partial class {className}: OnReadyInterface.IOnReady
                     {{
                         public void OnReady(Godot.Node node)
                         {{

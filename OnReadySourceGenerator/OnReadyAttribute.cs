@@ -13,4 +13,12 @@ public class OnReadyAttribute : Attribute
     }
 }
 
+public static class OnReadyInterface
+{
+    public interface IOnReady
+    {
+        //Just an empty interface to be used as a marker
+    }
+}
+
 
