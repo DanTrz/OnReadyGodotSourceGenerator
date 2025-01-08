@@ -15,6 +15,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Microsoft.CodeAnalysis.CSharp;
 using SourceGenerator;
+using System.Runtime.CompilerServices;
 
 [Generator]
 public class OnReadySourceGenerator : ISourceGenerator
@@ -47,8 +48,12 @@ public class OnReadySourceGenerator : ISourceGenerator
         //DEBUGGER: Uncomment this line to run a debugger and navigate the code.
         //if (!Debugger.IsAttached) Debugger.Launch();
 
-        // Register a syntax receiver to capture field declarations with the OnReadyAttribute (Custom syntax receiver)
+        // Register a syntax receiver to capture FIELD declarations with the OnReadyAttribute (Custom syntax receiver)
         context.RegisterForSyntaxNotifications(() => new OnReadySyntaxReceiver());
+
+        // Register a syntax receiver to capture PROPERTY declarations with the OnReadyAttribute (Custom syntax receiver)
+        // ERROR Would need a separate Source Generator or an alternative way to handle both prorperties and fieds
+        //context.RegisterForSyntaxNotifications(() => new OnReadyCallableSyntaxReceiver()); 
     }
 
     /// <summary>
@@ -60,7 +65,8 @@ public class OnReadySourceGenerator : ISourceGenerator
         /// <summary>
         /// The list of field declarations with the OnReadyAttribute.
         /// </summary>
-        public List<BaseFieldDeclarationSyntax> Fields { get; } = new();
+        public List<BaseFieldDeclarationSyntax> ItemsFields { get; } = new();
+        public List<BasePropertyDeclarationSyntax> ItemsProperties { get; } = new();//TODO: this is never used/Consider removing it
 
         /// <summary>
         /// Called by the compiler to visit a syntax node. Filters to retrive only field declarations with the OnReady attribute.
@@ -69,22 +75,37 @@ public class OnReadySourceGenerator : ISourceGenerator
         public void OnVisitSyntaxNode(SyntaxNode syntaxNode)
         {
             // Capture fields annotated only
-            if (syntaxNode is not FieldDeclarationSyntax fieldDeclaration)
+            if (syntaxNode is FieldDeclarationSyntax fieldDeclaration)
             {
-                return;
+                // Check if the field declaration has the OnReady attribute 
+                var hasOnReadyAttribute = fieldDeclaration.AttributeLists
+                    .SelectMany(attrList => attrList.Attributes)
+                    .Any(attr => attr.Name.ToString() == Const.ONREADY);
+
+                // Capture fields annotated with [OnReady]
+                if (hasOnReadyAttribute)
+                {
+                    // Add the field declaration to the list
+                    ItemsFields.Add(fieldDeclaration);
+                }
+            }
+            else if (syntaxNode is PropertyDeclarationSyntax propertyDeclaration) //TODO: this is never used/Consider removing it
+            {
+                // Check if the field declaration has the OnReady attribute 
+                var hasOnReadyAttribute = propertyDeclaration.AttributeLists
+                    .SelectMany(attrList => attrList.Attributes)
+                    .Any(attr => attr.Name.ToString() == Const.ONREADY);
+
+                // Capture fields annotated with [OnReady]
+                if (hasOnReadyAttribute)
+                {
+                    // Add the field declaration to the list
+                    ItemsProperties.Add(propertyDeclaration);
+                }
+
             }
 
-            // Check if the field declaration has the OnReady attribute 
-            var hasOnReadyAttribute = fieldDeclaration.AttributeLists
-                .SelectMany(attrList => attrList.Attributes)
-                .Any(attr => attr.Name.ToString() == Const.ONREADY);
 
-            // Capture fields annotated with [OnReady]
-            if (hasOnReadyAttribute)
-            {
-                // Add the field declaration to the list
-                Fields.Add(fieldDeclaration);
-            }
 
         }
     }
@@ -95,11 +116,22 @@ public class OnReadySourceGenerator : ISourceGenerator
     /// <param name="context">The context of the source generator.</param>
     public void Execute(GeneratorExecutionContext context)
     {
-        //Retrieve the syntax receiver and checks only for the OnReadySyntaxReceiver (that's the one we want)
+        //OnReadySyntaxReceiver receiver = null;
+
+        ////Retrieve the syntax receiver and checks only for the OnReadySyntaxReceiver (that's the one we want)
+        //if (context.SyntaxReceiver is OnReadySyntaxReceiver OnReadyReceiver)
+        //{
+        //    receiver = (OnReadySyntaxReceiver)OnReadyReceiver;
+        //}
+        //else if (context.SyntaxReceiver is OnReadyCallableSyntaxReceiver onReadyCallableReceiver)
+        //{
+        //    receiver = (OnReadyCallableSyntaxReceiver)onReadyCallableReceiver as ;
+        //}
+
         if (context.SyntaxReceiver is not OnReadySyntaxReceiver receiver) return;
 
-        //If no fields with Onready attributes are found, we return a warning message
-        if (!receiver.Fields.Any())
+            //If no fields with Onready attributes are found, we return a warning message
+        if (!receiver.ItemsFields.Any())
         {
             var desc = new DiagnosticDescriptor(
               "ONREADYSG01",
@@ -114,7 +146,7 @@ public class OnReadySourceGenerator : ISourceGenerator
         }
 
         //Debug and Log
-        File.AppendAllText($@"{SaveFilePath()}{"MasterLog"}", "Total OnReady Declaration Count: " + receiver.Fields.Count().ToString() + "\r\n");
+        File.AppendAllText($@"{SaveFilePath()}{"MasterLog"}", "Total OnReady Declaration Count: " + receiver.ItemsFields.Count().ToString() + "\r\n");
 
         var modePathString = string.Empty;
         var filedTypeString = string.Empty;
@@ -127,7 +159,7 @@ public class OnReadySourceGenerator : ISourceGenerator
         Dictionary<string, List<(string fieldName, string fieldType, string nodePath, string initializer)>> onReadyVariablesList = new();
 
         // Process each field marked with OnReadyAttribute
-        foreach (var field in receiver.Fields)
+        foreach (var field in receiver.ItemsFields)
         {
             // Check if the field is a field declaration, if not, go to the next field to check.
             if (field is not FieldDeclarationSyntax fieldDeclaration) continue;
@@ -190,7 +222,7 @@ public class OnReadySourceGenerator : ISourceGenerator
         }
 
         //Check for Errors and add error messaages
-        if (receiver.Fields.Count == 0)
+        if (receiver.ItemsFields.Count == 0)
         {
             var desc = new DiagnosticDescriptor(
                   "ONREADYSG02",

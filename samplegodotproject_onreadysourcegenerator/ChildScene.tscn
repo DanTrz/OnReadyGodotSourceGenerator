@@ -16,3 +16,7 @@ layout_mode = 0
 offset_right = 40.0
 offset_bottom = 23.0
 text = "Node not initiated - Not Unique Name - From ChildScene"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+unique_name_in_owner = true
+position = Vector2(455, 213)

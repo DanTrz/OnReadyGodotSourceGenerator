@@ -1,12 +1,19 @@
 ﻿<Project Sdk="Godot.NET.Sdk/4.3.0">
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <TargetFramework Condition=" '$(GodotTargetPlatform)' == 'android' ">net7.0</TargetFramework>
     <TargetFramework Condition=" '$(GodotTargetPlatform)' == 'ios' ">net8.0</TargetFramework>
     <EnableDynamicLoading>true</EnableDynamicLoading>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\OnReadySourceGenerator\OnReadySourceGenerator.csproj"
-	                  OutputItemType="Analyzer"/>
+    <ProjectReference Include="..\OnReadySourceGenerator\OnReadySourceGenerator.csproj" OutputItemType="Analyzer" />
   </ItemGroup>
+
+	<Target Name="PostBuild" AfterTargets="Build">
+		<Message Importance="high" Text="ILWeaver should be running now..." />
+		<Message Importance="high" Text="TargetPath: $(TargetPath)" />
+		<Exec Command="dotnet run --project &quot;..\ILWeaver\ILWeaver.csproj&quot; &quot;$(TargetPath)&quot;" />
+	</Target>
+
+
 </Project>
