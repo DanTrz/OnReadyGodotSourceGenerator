@@ -6,6 +6,25 @@ using Mono.Cecil.Cil;
 
 class ILWeaver
 {
+    public static string GodotTempcopyAssemblyPath()
+    {
+        string godotSourceAssemblyPath = @"C:\Local Documents\Development\Godot\Source Generator Tests\OnReadyGodotSourceGenerator\samplegodotproject_onreadysourcegenerator\.godot\mono\temp\bin\Debug\SampleGodotProject_OnReadySourceGenerator.dll";
+        string tempAssemblyPath = @"C:\Local Documents\Development\Godot\Source Generator Tests\OnReadyGodotSourceGenerator\samplegodotproject_onreadysourcegenerator\.godot\mono\temp\bin\Debug\Temp_SampleGodotProject_OnReadySourceGenerator.dll";
+
+        try
+        {
+            File.Copy(godotSourceAssemblyPath, tempAssemblyPath, true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"////-WEAVER-////Failed to copy the original assembly: {ex.Message}");
+        }
+
+        return tempAssemblyPath;
+
+
+        //return @"C:\Local Documents\Development\Godot\Source Generator Tests\OnReadyGodotSourceGenerator\samplegodotproject_onreadysourcegenerator\.godot\mono\temp\bin\Debug\SampleGodotProject_OnReadySourceGenerator.dll";
+    }
     static void Main(string[] args)
     {
         Console.WriteLine("////-WEAVER-////Weaver Started");
@@ -15,17 +34,21 @@ class ILWeaver
             Console.WriteLine("////-WEAVER-////Usage: ILWeaver <path_to_target_assembly>");
             return;
         }
-        // Get the path to the executing assembly (the Weaver DLL)
+        //Get the path to the executing assembly(the Weaver DLL)
         string sourceAssemblyPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
 
-        string targetAssemblyPath = args[0];
-        
+        //string targetAssemblyPath = args[0];
+        string targetAssemblyPath = @"C:\Local Documents\Development\Godot\Source Generator Tests\OnReadyGodotSourceGenerator\samplegodotproject_onreadysourcegenerator\.godot\mono\temp\bin\Debug\SampleGodotProject_OnReadySourceGenerator.dll";
+
+        string tempTargetAssemblyPath = GodotTempcopyAssemblyPath();
+
         //InjectLogging(assemblyPath);
-        InjectLogging2(targetAssemblyPath, sourceAssemblyPath);
+        InjectLogging2(targetAssemblyPath, sourceAssemblyPath, tempTargetAssemblyPath);
     }
 
     static void CopyModifiedDll(string tempAssemblyPath, string targetAssemblyPath)
     {
+
         Console.WriteLine($"////-WEAVER-////Started Trying to Modify Godot DLL: {targetAssemblyPath}");
         int retries = 20;
         while (retries > 0)
@@ -78,73 +101,105 @@ class ILWeaver
     }
 
 
-    static void InjectLogging2(string targetAssemblyPath, string sourceAssemblyPath)
+    static void InjectLogging2(string targetAssemblyPath, string sourceAssemblyPath, string tempTargetAssemblyPath)
     {
         // Load the source and target assemblies
         var sourceAssembly = ModuleDefinition.ReadModule(sourceAssemblyPath);
-        var targetAssembly = ModuleDefinition.ReadModule(targetAssemblyPath);
+        var tempTargetAssembly = ModuleDefinition.ReadModule(tempTargetAssemblyPath);
 
-        // Get the source method (e.g., _Notification from CodeToCopy)
-        var sourceAssemblyTypes = sourceAssembly.Types.FirstOrDefault(t => t.Methods.Any(m => m.Name == "TestMethodSource"));
-        var sourceMethod = sourceAssemblyTypes.Methods.First();
-        Console.WriteLine($"////-WEAVER-//// SOURCE FOUND : {sourceAssemblyTypes.Methods.First(m => m.Name == "TestMethodSource").FullName}");
+        Console.WriteLine($"////-WEAVER-//// Original Target: {targetAssemblyPath}");
+        Console.WriteLine($"////-WEAVER-//// Temp Target: {tempTargetAssemblyPath}");
+        Console.WriteLine($"////-WEAVER-//// Source: {sourceAssemblyPath}");
 
-        // Import the source method into the target module
-        var importedMethod = targetAssembly.ImportReference(sourceMethod);
+        // Get the source method
+        var sourceAssemblyType = sourceAssembly.Types.FirstOrDefault(t => t.Methods.Any(m => m.Name == "TestMethodSource"));
+        var sourceMethod = sourceAssemblyType.Methods.First(m => m.Name == "TestMethodSource");
 
-        // Find the target class to add the method to
-        var targetTypes = targetAssembly.Types.FirstOrDefault(t => t.Methods.Any(m => m.Name == "TestMethod"));
-        var targetMethod = targetTypes.Methods.First();
-  
+        // Find the target method in the target assembly
+        var targetType = tempTargetAssembly.Types.FirstOrDefault(t => t.Methods.Any(m => m.Name == "TestMethod"));
+        var targetMethod = targetType.Methods.First(m => m.Name == "TestMethod");
+
         if (targetMethod == null)
         {
-            throw new Exception("Target class not found in the target assembly.");
-            Console.WriteLine($"////-WEAVER-//// Target class not found in the target assembly.");
+            throw new Exception("////-WEAVER-//// Target method not found in the target assembly.");
         }
 
-        // Create a new method in the target type
-        var newMethod = new MethodDefinition(
-            sourceMethod.Name,
-            sourceMethod.Attributes,
-            targetAssembly.ImportReference(sourceMethod.ReturnType)
-        );
+        // Clear the target method body
+        var targetBody = targetMethod.Body;
+        targetBody.Instructions.Clear();
+        targetBody.ExceptionHandlers.Clear();
+        targetBody.Variables.Clear();
 
-        // Import parameters
-        foreach (var param in sourceMethod.Parameters)
+        // Copy the method body from the source method
+        var sourceBody = sourceMethod.Body;
+        var ilProcessor = targetBody.GetILProcessor();
+        var instructionMap = new Dictionary<Instruction, Instruction>();
+
+        // Copy variables
+        foreach (var variable in sourceBody.Variables)
         {
-            newMethod.Parameters.Add(new ParameterDefinition(param.Name, param.Attributes, targetAssembly.ImportReference(param.ParameterType)));
+            var importedVariableType = tempTargetAssembly.ImportReference(variable.VariableType);
+            targetBody.Variables.Add(new VariableDefinition(importedVariableType));
         }
+        Console.WriteLine($"////-WEAVER-//// Variables Copied");
 
-        // Copy the IL body of the source method
-        //foreach (var instruction in sourceMethod.Body.Instructions)
-        //{
-        //    if (instruction.Operand is IMetadataTokenProvider metadataTokenProvider)
-        //    {
-        //        newMethod.Body.Instructions.Add(Instruction.Create(instruction.OpCode, targetAssembly.ImportReference((TypeReference)metadataTokenProvider)));
-        //    }
-        //    else
-        //    {
-        //        newMethod.Body.Instructions.Add(instruction);
-        //    }
-        //}
-
-
-        // Add the new method to the target class
-        //targetType.Methods.Add(newMethod);
-        var processor = targetMethod.Body.GetILProcessor();
-        processor.Clear();
-
-        foreach (var instruction in sourceMethod.Body.Instructions)
+        // Copy instructions
+        foreach (var instruction in sourceBody.Instructions)
         {
-            processor.Append(instruction);
-            Console.WriteLine($"////-WEAVER-//// Instruction beind added: {instruction.ToString()}");
+            var newInstruction = instruction.Operand switch
+            {
+                MethodReference methodRef => Instruction.Create(instruction.OpCode, tempTargetAssembly.ImportReference(methodRef)),
+                FieldReference fieldRef => Instruction.Create(instruction.OpCode, tempTargetAssembly.ImportReference(fieldRef)),
+                TypeReference typeRef => Instruction.Create(instruction.OpCode, tempTargetAssembly.ImportReference(typeRef)),
+                ParameterDefinition paramDef => Instruction.Create(instruction.OpCode, targetMethod.Parameters[paramDef.Index]),
+                VariableDefinition varDef => Instruction.Create(instruction.OpCode, targetBody.Variables[varDef.Index]),
+                string str => Instruction.Create(instruction.OpCode, str),
+                null => Instruction.Create(instruction.OpCode),
+                _ => throw new NotSupportedException($"////-WEAVER-//// Unsupported operand type: {instruction.Operand?.GetType().FullName}")
+            };
+            Console.WriteLine($"////-WEAVER-//// instructions Copied");
+
+            ilProcessor.Append(newInstruction);
+            instructionMap[instruction] = newInstruction; // Map old instructions to new ones for branch fixups
+            Console.WriteLine($"////-WEAVER-//// instructions mapped");
         }
 
-        // Save the modified target assembly
-        targetAssembly.Write(targetAssemblyPath);
+        // -Fix branch instructions and exception handlers
+        foreach (var instruction in targetBody.Instructions)
+        {
+            if (instruction.Operand is Instruction targetInstruction && instructionMap.ContainsKey(targetInstruction))
+            {
+                instruction.Operand = instructionMap[targetInstruction];
+            }
+            else if (instruction.Operand is Instruction[] targets)
+            {
+                instruction.Operand = targets.Select(t => instructionMap[t]).ToArray();
+            }
+        }
 
-        Console.WriteLine($"Successfully copied Sucessfull to {targetAssemblyPath}");
+        // Copy exception handlers
+        foreach (var handler in sourceBody.ExceptionHandlers)
+        {
+            targetBody.ExceptionHandlers.Add(new ExceptionHandler(handler.HandlerType)
+            {
+                CatchType = handler.CatchType == null ? null : tempTargetAssembly.ImportReference(handler.CatchType),
+                TryStart = instructionMap[handler.TryStart],
+                TryEnd = instructionMap[handler.TryEnd],
+                HandlerStart = instructionMap[handler.HandlerStart],
+                HandlerEnd = instructionMap[handler.HandlerEnd],
+                FilterStart = handler.FilterStart == null ? null : instructionMap[handler.FilterStart]
+            });
+        }
+        Console.WriteLine($"////-WEAVER-//// instructions exception handlers done");
+
+        // Save the modified assembly to the target path
+        tempTargetAssembly.Write(targetAssemblyPath);
+
+        Console.WriteLine($"////-WEAVER-//// SUCCESS: saved the modified assembly to: {targetAssemblyPath}");
+
+        //printCodeOutput(targetAssemblyPath, "SampleScene", "TestMethod");
     }
+
 
 
     static void InjectLogging(string targetAssemblyPath)
@@ -318,37 +373,58 @@ class ILWeaver
 
         //                var processor = method.Body.GetILProcessor();
 
-        //                // Inject: GD.Print("_Ready called in <TypeName>")
-        //                processor.InsertBefore(method.Body.Instructions.First(),
-        //                    processor.Create(OpCodes.Ldstr, $"IL Weaver _Ready called in {type.Name}"));
-        //                processor.InsertAfter(method.Body.Instructions.First(),
-        //                    processor.Create(OpCodes.Call, godotGDPrintMethod));
-        //            }
-        //        }
-        //    }
 
-        //    // Save the modified module
-        //    assembly.Write(assemblyPath);
-        //    Console.WriteLine("////-WEAVER-////Weaving completed successfully.");
-        //}
-
-        //static MethodReference? ResolveGodotPrintMethod(ModuleDefinition module)
-        //{
-        //    // Find the Godot.GD type in the target module's references
-        //    var godotGDType = module.AssemblyReferences
-        //        .Select(reference => module.AssemblyResolver.Resolve(reference))
-        //        .SelectMany(resolvedAssembly => resolvedAssembly.MainModule.Types)
-        //        .FirstOrDefault(type => type.FullName == "Godot.GD");
-
-        //    if (godotGDType == null)
-        //        return null;
-
-        //    // Find the "Print" method within Godot.GD
-        //    var printMethod = godotGDType.Methods.FirstOrDefault(m => m.Name == "Print");
-        //    if (printMethod == null)
-        //        return null;
-
-        //    // Import the method into the target module
-        //    return module.ImportReference(printMethod);
     }
+
+    public static void printCodeOutput(string assemblyToReadPath, string className, string methodName)
+    {
+        // Path to the assembly you want to inspect
+        var assemblyPath = assemblyToReadPath;
+
+        // Load the assembly
+        var assembly = AssemblyDefinition.ReadAssembly(assemblyPath);
+
+        // Find the type and method you are interested in
+        var type = assembly.MainModule.GetType(className); // Replace with your class
+        var method = type.Methods.FirstOrDefault(m => m.Name == methodName);
+
+        Console.WriteLine($"///WEAVER OUTPUT/// Check Result in path: {assemblyToReadPath}");
+        Console.WriteLine($"///WEAVER OUTPUT/// Check Method Name: {method.Name}");
+
+        if (method != null)
+        {
+            Console.WriteLine($"///WEAVER OUTPUT/// Method Name: {method.Name}");
+            Console.WriteLine(FormatMethodAsCSharp(method));
+        }
+        else
+        {
+            Console.WriteLine("///WEAVER OUTPUT/// Method not found!");
+        }
+    }
+
+    static string FormatMethodAsCSharp(MethodDefinition method)
+    {
+        var modifiers = method.IsPublic ? "public" : method.IsPrivate ? "private" : method.IsFamily ? "protected" : "internal";
+        if (method.IsStatic)
+        {
+            modifiers += " static";
+        }
+
+        var returnType = method.ReturnType.Name;
+        var methodName = method.Name;
+
+        var parameters = string.Join(", ", method.Parameters
+            .Select(p => $"{p.ParameterType.Name} {p.Name}"));
+
+        var body = FormatBody(method.Body);
+
+        return $"{modifiers} {returnType} {methodName}({parameters})\n{{\n{body}\n}}";
+    }
+
+    static string FormatBody(MethodBody body)
+    {
+        var instructions = body.Instructions.Select(i => $"    {i.OpCode} {i.Operand}");
+        return string.Join("\n", instructions);
+    }
+
 }

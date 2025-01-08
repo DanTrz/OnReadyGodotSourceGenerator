@@ -1,42 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
+using Godot;
 
 
-public  class CodeToCopy: CodeBase
+public class CodeToCopy:Node
 {
 
     public void TestMethodSource()
-    {
-       Console.WriteLine("WEAVER CRREATED => TestMethodSource");
+    { 
+        GD.Print("!!!!GD PRINT CODE ->>>> WEAVER CREATED WORKING Copied from TestMethodSource");
+
+        GD.Print("!!!!CODE 2 -> GD PRINT CODE ->>>> WEAVER CREATED WORKING Copied from TestMethodSource");
+
+        
     }
 
+    public override void _Notification(int what) => this.OnReady(this);
+
+    private void OnReady(CodeToCopy codeToCopy)
+    {
+        throw new NotImplementedException();
+    }
 }
 
-public class GD
-{
-    public static void PrintT(params object[] args)
-    {
-        Console.WriteLine(args);
-    }
-}
-
-public class CodeBase
-{
-    public virtual void _Notification(int what)
-    {
-       // this.OnReady(this);
-    }
-
-    public void OnReady(CodeToCopy obj)
-    {
-        //
-    }
-
-
-}
 
 
 

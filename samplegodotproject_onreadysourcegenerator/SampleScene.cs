@@ -1,13 +1,15 @@
 using Godot;
 using System;
+using System.Reflection;
+using static Godot.XmlParser;
 
 public partial class SampleScene : Node2D
 {
     //NODE INTIALIZATION
-	[OnReady("%LabelUniqueName")] private Label _UniqueNameLabel;
+    [OnReady("%LabelUniqueName")] private Label _UniqueNameLabel;
     [OnReady("CanvasLayer/PanelContainer/VBoxContainer/LabelNotUniqueName")] private Label _NotUniqueNameLabel;
     [OnReady("%Sprite2D")] private Sprite2D _mySprite2D;
-    
+
     //PARENTH INTIALIZATION
     [OnReady("..")] private Node _myParent; //Using.. = get_root() in this context
 
@@ -41,24 +43,53 @@ public partial class SampleScene : Node2D
 
 
     public void TestMethod()
-    { 
-        
+    {
+        GD.Print("OriginalContent");
+    }
+
+    public override void _Process(double delta)
+    {
+
     }
 
     public override void _Ready()
     {
         TestMethod();
+
         //_myParent = GetParent<Node>();
         _UniqueNameLabel.Text = "Initiated via OnReady - Working - Unique name Node";
         _NotUniqueNameLabel.Text = "Initiated via OnReady - Working - Not Unique name Node";
         GD.PrintT("Globals OnReady: ", this.Name.ToString(), "Variable: ", _Globals.MyGlobalVariable);
+
+
+        //if (this.HasMethod("TestMethodSource"))
+        //{
+        // Get the runtime type of the node
+        // var nodeType = this.GetType(); ;
+
+        // // Dynamically look for an "OnReady" method in the node class
+        // var method = nodeType?.GetMethod("TestMethod", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+
+        // if (method != null)
+        // {
+        //     // Invoke the method, passing the node itself as the parameter
+        //     //method.Invoke(this, null);
+        //     GD.Print("SUCESS -> FOUND METHOD: " + method.Name.ToString());
+
+
+        // }
+        // else
+        // {
+        //     GD.Print("FAILED -> NOT FOUND METHOD: " + method.Name.ToString());
+        // }
+        //}
 
         _mySprite2D.Texture = texture;
 
 
         if (_myParent != null)
         {
-            GD.PrintT("Parent Node from " , this.Name.ToString() , "Parent Name =" , _myParent.Name);
+            GD.PrintT("Parent Node from ", this.Name.ToString(), "Parent Name =", _myParent.Name);
         }
 
 

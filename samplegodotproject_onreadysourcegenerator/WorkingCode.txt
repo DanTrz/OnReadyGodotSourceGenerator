@@ -1,0 +1,101 @@
+// Example of modifying and saving the assembly
+    static void InjectLogging2(string targetAssemblyPath, string sourceAssemblyPath, string tempTargetAssemblyPath)
+    {
+        // Load the source and target assemblies
+        var sourceAssembly = ModuleDefinition.ReadModule(sourceAssemblyPath);
+        var tempTargetAssembly = ModuleDefinition.ReadModule(tempTargetAssemblyPath);
+
+        Console.WriteLine($"////-WEAVER-//// Original Target: {targetAssemblyPath}");
+        Console.WriteLine($"////-WEAVER-//// Temp Target: {tempTargetAssemblyPath}");
+        Console.WriteLine($"////-WEAVER-//// Source: {sourceAssemblyPath}");
+
+        // Get the source method
+        var sourceAssemblyType = sourceAssembly.Types.FirstOrDefault(t => t.Methods.Any(m => m.Name == "TestMethodSource"));
+        var sourceMethod = sourceAssemblyType.Methods.First(m => m.Name == "TestMethodSource");
+
+        // Find the target method in the target assembly
+        var targetType = tempTargetAssembly.Types.FirstOrDefault(t => t.Methods.Any(m => m.Name == "TestMethod"));
+        var targetMethod = targetType.Methods.First(m => m.Name == "TestMethod");
+
+        if (targetMethod == null)
+        {
+            throw new Exception("////-WEAVER-//// Target method not found in the target assembly.");
+        }
+
+        // Clear the target method body
+        var targetBody = targetMethod.Body;
+        targetBody.Instructions.Clear();
+        targetBody.ExceptionHandlers.Clear();
+        targetBody.Variables.Clear();
+
+        // Copy the method body from the source method
+        var sourceBody = sourceMethod.Body;
+        var ilProcessor = targetBody.GetILProcessor();
+        var instructionMap = new Dictionary<Instruction, Instruction>();
+
+        // Copy variables
+        foreach (var variable in sourceBody.Variables)
+        {
+            var importedVariableType = tempTargetAssembly.ImportReference(variable.VariableType);
+            targetBody.Variables.Add(new VariableDefinition(importedVariableType));
+        }
+        Console.WriteLine($"////-WEAVER-//// Variables Copied");
+
+        // Copy instructions
+        foreach (var instruction in sourceBody.Instructions)
+        {
+            var newInstruction = instruction.Operand switch
+            {
+                MethodReference methodRef => Instruction.Create(instruction.OpCode, tempTargetAssembly.ImportReference(methodRef)),
+                FieldReference fieldRef => Instruction.Create(instruction.OpCode, tempTargetAssembly.ImportReference(fieldRef)),
+                TypeReference typeRef => Instruction.Create(instruction.OpCode, tempTargetAssembly.ImportReference(typeRef)),
+                ParameterDefinition paramDef => Instruction.Create(instruction.OpCode, targetMethod.Parameters[paramDef.Index]),
+                VariableDefinition varDef => Instruction.Create(instruction.OpCode, targetBody.Variables[varDef.Index]),
+                string str => Instruction.Create(instruction.OpCode, str),
+                null => Instruction.Create(instruction.OpCode),
+                _ => throw new NotSupportedException($"////-WEAVER-//// Unsupported operand type: {instruction.Operand?.GetType().FullName}")
+            };
+            Console.WriteLine($"////-WEAVER-//// instructions Copied");
+
+            ilProcessor.Append(newInstruction);
+            instructionMap[instruction] = newInstruction; // Map old instructions to new ones for branch fixups
+            Console.WriteLine($"////-WEAVER-//// instructions mapped");
+        }
+
+
+        // -Fix branch instructions and exception handlers
+        foreach (var instruction in targetBody.Instructions)
+        {
+            if (instruction.Operand is Instruction targetInstruction && instructionMap.ContainsKey(targetInstruction))
+            {
+                instruction.Operand = instructionMap[targetInstruction];
+            }
+            else if (instruction.Operand is Instruction[] targets)
+            {
+                instruction.Operand = targets.Select(t => instructionMap[t]).ToArray();
+            }
+        }
+
+
+        // Copy exception handlers
+        foreach (var handler in sourceBody.ExceptionHandlers)
+        {
+            targetBody.ExceptionHandlers.Add(new ExceptionHandler(handler.HandlerType)
+            {
+                CatchType = handler.CatchType == null ? null : tempTargetAssembly.ImportReference(handler.CatchType),
+                TryStart = instructionMap[handler.TryStart],
+                TryEnd = instructionMap[handler.TryEnd],
+                HandlerStart = instructionMap[handler.HandlerStart],
+                HandlerEnd = instructionMap[handler.HandlerEnd],
+                FilterStart = handler.FilterStart == null ? null : instructionMap[handler.FilterStart]
+            });
+        }
+        Console.WriteLine($"////-WEAVER-//// instructions expection handlers done");
+
+        // Save the modified assembly to the target path
+        tempTargetAssembly.Write(targetAssemblyPath);
+
+        Console.WriteLine($"////-WEAVER-//// SUCESS: saved the modified assembly to: {targetAssemblyPath}");
+
+        printCodeOutput(targetAssemblyPath, "SampleScene", "TestMethod");
+    }
