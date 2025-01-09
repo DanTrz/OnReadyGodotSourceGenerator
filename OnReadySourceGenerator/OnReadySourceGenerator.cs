@@ -12,6 +12,10 @@ using System.Diagnostics;
 using System.Runtime.InteropServices.ComTypes;
 using System.Xml.Linq;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using Microsoft.CodeAnalysis.CSharp;
+using SourceGenerator;
+using System.Runtime.CompilerServices;
 
 [Generator]
 public class OnReadySourceGenerator : ISourceGenerator
@@ -21,18 +25,22 @@ public class OnReadySourceGenerator : ISourceGenerator
     /// </summary>
     private static string SaveFilePath()
     {
-
         //// This will get the current WORKING directory (i.e. \bin\Debug)
         //string workingDirectory = Environment.CurrentDirectory;     // or: Directory.GetCurrentDirectory() gives the same result
-
-        //// This will get the current PROJECT bin directory (ie ../bin/)
-        ////string projectDirectory = Directory.GetParent(workingDirectory).Parent.FullName;
 
         //// This will get the current TOP LEVEL PROJECT directory
         //string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName +"/";
 
-        string projectDirectory = "C:\\Temp\\OnReadySourceGenerator\\";
-        return projectDirectory; 
+        string projectDirectory = "C:\\Local Documents\\Development\\Godot\\Source Generator Tests\\OnReadyGodotSourceGenerator\\samplegodotproject_onreadysourcegenerator\\.godot\\mono\\temp\\";
+        return projectDirectory;
+    }
+
+    /// <summary>
+    /// Comment this method or it's contents out to disable logging to a file
+    /// </summary>
+    private static void saveLogToFile(string logMessage)
+    {
+        //File.AppendAllText($@"{SaveFilePath()}{"MasterLog"}", logMessage + "\r\n");
     }
 
     /// <summary>
@@ -40,11 +48,11 @@ public class OnReadySourceGenerator : ISourceGenerator
     /// </summary>
     /// <param name="context">The context of the source generator.</param>
     public void Initialize(GeneratorInitializationContext context)
-    {   
+    {
         //DEBUGGER: Uncomment this line to run a debugger and navigate the code.
         //if (!Debugger.IsAttached) Debugger.Launch();
 
-        // Register a syntax receiver to capture field declarations with the OnReadyAttribute (Custom syntax receiver)
+        // Register a syntax receiver to capture FIELD declarations with the OnReadyAttribute (Custom syntax receiver)
         context.RegisterForSyntaxNotifications(() => new OnReadySyntaxReceiver());
     }
 
@@ -57,7 +65,8 @@ public class OnReadySourceGenerator : ISourceGenerator
         /// <summary>
         /// The list of field declarations with the OnReadyAttribute.
         /// </summary>
-        public List<BaseFieldDeclarationSyntax> Fields { get; } = new();
+        public List<BaseFieldDeclarationSyntax> ItemsFields { get; } = new();
+        public List<BasePropertyDeclarationSyntax> ItemsProperties { get; } = new();//TODO: this is never used/Consider removing it
 
         /// <summary>
         /// Called by the compiler to visit a syntax node. Filters to retrive only field declarations with the OnReady attribute.
@@ -66,22 +75,37 @@ public class OnReadySourceGenerator : ISourceGenerator
         public void OnVisitSyntaxNode(SyntaxNode syntaxNode)
         {
             // Capture fields annotated only
-            if (syntaxNode is not FieldDeclarationSyntax fieldDeclaration)
+            if (syntaxNode is FieldDeclarationSyntax fieldDeclaration)
             {
-                return;
+                // Check if the field declaration has the OnReady attribute 
+                var hasOnReadyAttribute = fieldDeclaration.AttributeLists
+                    .SelectMany(attrList => attrList.Attributes)
+                    .Any(attr => attr.Name.ToString() == Const.ONREADY);
+
+                // Capture fields annotated with [OnReady]
+                if (hasOnReadyAttribute)
+                {
+                    // Add the field declaration to the list
+                    ItemsFields.Add(fieldDeclaration);
+                }
+            }
+            else if (syntaxNode is PropertyDeclarationSyntax propertyDeclaration) //TODO: this is never used/Consider removing it
+            {
+                // Check if the field declaration has the OnReady attribute 
+                var hasOnReadyAttribute = propertyDeclaration.AttributeLists
+                    .SelectMany(attrList => attrList.Attributes)
+                    .Any(attr => attr.Name.ToString() == Const.ONREADY);
+
+                // Capture fields annotated with [OnReady]
+                if (hasOnReadyAttribute)
+                {
+                    // Add the field declaration to the list
+                    ItemsProperties.Add(propertyDeclaration);
+                }
+
             }
 
-            // Check if the field declaration has the OnReady attribute 
-            var hasOnReadyAttribute = fieldDeclaration.AttributeLists
-                .SelectMany(attrList => attrList.Attributes)
-                .Any(attr => attr.Name.ToString() == "OnReady");
 
-            // Capture fields annotated with [OnReady]
-            if (hasOnReadyAttribute)
-            {
-                // Add the field declaration to the list
-                Fields.Add(fieldDeclaration);
-            }
 
         }
     }
@@ -92,11 +116,22 @@ public class OnReadySourceGenerator : ISourceGenerator
     /// <param name="context">The context of the source generator.</param>
     public void Execute(GeneratorExecutionContext context)
     {
-        //Retrieve the syntax receiver and checks only for the OnReadySyntaxReceiver (that's the one we want)
+        //OnReadySyntaxReceiver receiver = null;
+
+        ////Retrieve the syntax receiver and checks only for the OnReadySyntaxReceiver (that's the one we want)
+        //if (context.SyntaxReceiver is OnReadySyntaxReceiver OnReadyReceiver)
+        //{
+        //    receiver = (OnReadySyntaxReceiver)OnReadyReceiver;
+        //}
+        //else if (context.SyntaxReceiver is OnReadyCallableSyntaxReceiver onReadyCallableReceiver)
+        //{
+        //    receiver = (OnReadyCallableSyntaxReceiver)onReadyCallableReceiver as ;
+        //}
+
         if (context.SyntaxReceiver is not OnReadySyntaxReceiver receiver) return;
 
         //If no fields with Onready attributes are found, we return a warning message
-        if (!receiver.Fields.Any())
+        if (!receiver.ItemsFields.Any())
         {
             var desc = new DiagnosticDescriptor(
               "ONREADYSG01",
@@ -111,20 +146,24 @@ public class OnReadySourceGenerator : ISourceGenerator
         }
 
         //Debug and Log
-        //File.AppendAllText($@"{SaveFilePath()}{"MasterLog"}", "Total OnReady Declaration Count: " + receiver.Fields.Count().ToString() + "\r\n");
+        saveLogToFile($@"Total OnReady Declaration Count: " + receiver.ItemsFields.Count().ToString() + "\r\n");
 
         var modePathString = string.Empty;
         var filedTypeString = string.Empty;
         var fieldSymbolString = string.Empty;
         var classNameString = string.Empty;
+        var intializerString = string.Empty;
         IList<INamedTypeSymbol> classSymbolsList = new List<INamedTypeSymbol>();
 
         //Dictonary to store all OnReady Variables /-/ Dic Key = ClassName /-/ Dic Value = List of OnReady Variables
-        Dictionary<string, List<(string fieldName, string fieldType, string nodePath)>> onReadyVariablesList = new();
+        Dictionary<string, List<(string fieldName, string fieldType, string nodePath, string initializer)>> onReadyVariablesList = new();
 
         // Process each field marked with OnReadyAttribute
-        foreach (var field in receiver.Fields)
+        foreach (var field in receiver.ItemsFields)
         {
+            // Check if the field is a field declaration, if not, go to the next field to check.
+            if (field is not FieldDeclarationSyntax fieldDeclaration) continue;
+
             var model = context.Compilation.GetSemanticModel(field.SyntaxTree);
 
             //this provides the entire class declaration, by getting the parent of the field
@@ -141,9 +180,6 @@ public class OnReadySourceGenerator : ISourceGenerator
                 classSymbolsList.Add(classSymbol);
             }
 
-            // Check if the field is a field declaration, if not, go to the next field to check.
-            if (field is not FieldDeclarationSyntax fieldDeclaration) continue;
-
             // Check the variables of type fieldDelcararion and then retrive it's details
             foreach (var variable in fieldDeclaration.Declaration.Variables)
             {
@@ -153,9 +189,16 @@ public class OnReadySourceGenerator : ISourceGenerator
                 //Retrives the field name / This is the variable name in Godot Script E.g. _myAudioStreamPlayer)
                 fieldSymbolString = fieldSymbol.Name.ToString();
 
+                // Retrieve the initializer expression if available (e.g., what comes after "=", like "GD.Load<PackedScene>(...)")
+                var variableInitializer = variable.Initializer;
+                intializerString = variableInitializer?.Value?.ToString() ?? string.Empty;
+                
+                saveLogToFile($@"From Variable: " + variable.ToFullString() + " -> Initializer: " + intializerString + "\r\n"); ;
+
+
                 // Retrieve the OnReady attribute details
                 var onReadyAttribute = fieldSymbol.GetAttributes()
-                    .FirstOrDefault(attr => attr.AttributeClass?.Name == "OnReadyAttribute");
+                    .FirstOrDefault(attr => attr.AttributeClass?.Name == Const.ONREADY_ATTRIBUTE);
                 if (onReadyAttribute == null) continue;
 
                 // Extract the NodePath - This is the path to the node within the OnReady attribute
@@ -167,23 +210,21 @@ public class OnReadySourceGenerator : ISourceGenerator
                 if (filedTypeString == null) continue;
 
                 // Dict Key  = Classes // Dict Values = Fields in Classes with OnReady
-                // We check if if already have a Key for that class, otherwise we create one. 
-                if (onReadyVariablesList.ContainsKey(classNameString))
+                // We check if if already have a Key for that class, otherwise we create one.
+                if (!onReadyVariablesList.ContainsKey(classNameString))
                 {
-                    onReadyVariablesList[classNameString].Add((fieldSymbolString, filedTypeString, modePathString));
+                    onReadyVariablesList.Add(classNameString, new List<(string, string, string, string)> {
+                        (fieldSymbolString, filedTypeString, modePathString, intializerString) });
                 }
                 else
                 {
-                    onReadyVariablesList.Add(classNameString, new List<(string, string, string)> {
-                        (fieldSymbolString, filedTypeString, modePathString) });
+                    onReadyVariablesList[classNameString].Add((fieldSymbolString, filedTypeString, modePathString, intializerString));
                 }
             }
-
         }
 
-
         //Check for Errors and add error messaages
-        if (receiver.Fields.Count == 0)
+        if (receiver.ItemsFields.Count == 0)
         {
             var desc = new DiagnosticDescriptor(
                   "ONREADYSG02",
@@ -226,6 +267,7 @@ public class OnReadySourceGenerator : ISourceGenerator
             string fieldName = string.Empty;
             string fieldType = string.Empty;
             string nodePath = string.Empty;
+            string initializer = string.Empty;
 
             StringBuilder tempAllNodeDeclarations = new();
 
@@ -235,17 +277,57 @@ public class OnReadySourceGenerator : ISourceGenerator
                 fieldName = onReadyfield.fieldName;
                 fieldType = onReadyfield.fieldType;
                 nodePath = onReadyfield.nodePath;
+                initializer = onReadyfield.initializer;
 
-                //Create the node declaration string with the GetNode method and Error Handler
-                tempAllNodeDeclarations.Append($@"myNode.{fieldName} = node.GetNode<{fieldType}>(""{nodePath}"");");
-                tempAllNodeDeclarations.Append("\n");
-                tempAllNodeDeclarations.Append($@"
+
+                if (!string.IsNullOrEmpty(initializer) && nodePath.StartsWith(Const.INITIALIZER_SYMBOL))
+                {
+
+                    //Create the node declaration string with the GetNode method and Error Handler
+                    tempAllNodeDeclarations.Append($@"myNode.{fieldName} = {initializer};");
+                    tempAllNodeDeclarations.Append("\n");
+                    tempAllNodeDeclarations.Append($@"
                     if ({fieldName} == null || myNode.{fieldName} == null)
                     {{
-                        GD.PrintErr(""Could not resolve OnReady member:{fieldName}      NodePath:{nodePath}     Class:{className}."");
+                        GD.PrintErr(""ONREADYSG201: Could not resolve OnReady member:{fieldName} Class:{className}  Check if special $ symbol was added or if path is incorrect"");
+                        GD.PrintErr(""Fields or Variables with Initializer require special $ symbol, e.g. [OnReady({Const.INITIALIZER_SYMBOL})] "");
                     }}
-                ");
-                tempAllNodeDeclarations.Append("\n");
+                    ");
+
+                    tempAllNodeDeclarations.Append("\n");
+                }
+                else if (!string.IsNullOrEmpty(initializer))
+                {
+                    //Create the node declaration string with the GetNode method and Error Handler
+                    tempAllNodeDeclarations.Append($@"myNode.{fieldName} = {initializer};");
+                    tempAllNodeDeclarations.Append("\n");
+                    tempAllNodeDeclarations.Append($@"
+                    if ({fieldName} == null || myNode.{fieldName} == null)
+                    {{
+                        GD.PrintErr(""ONREADYSG202: Could not resolve OnReady member:{fieldName} Class:{className}  Check if special $ symbol was added or if path is incorrect"");
+                        GD.PrintErr(""Fields or Variables with Initializer require special $ symbol, e.g. [OnReady({Const.INITIALIZER_SYMBOL})] "");
+                    }}
+                    ");
+
+                    tempAllNodeDeclarations.Append("\n");
+                }
+                else
+                {
+                    //Create the node declaration string with the GetNode method and Error Handler
+                    tempAllNodeDeclarations.Append($@"myNode.{fieldName} = node.GetNode<{fieldType}>(""{nodePath}"");");
+                    tempAllNodeDeclarations.Append("\n");
+                    tempAllNodeDeclarations.Append($@"
+                    if ({fieldName} == null || myNode.{fieldName} == null)
+                    {{
+                        GD.PrintErr(""ONREADYSG203: Could not resolve OnReady member:{fieldName}  NodePath:{nodePath}  Class:{className}."");
+                    }}
+                    ");
+
+                    tempAllNodeDeclarations.Append("\n");
+
+                }
+
+
             }
 
             //final source code generation method and then we add it to the context to be compiled
@@ -254,9 +336,13 @@ public class OnReadySourceGenerator : ISourceGenerator
 
             sourceAdded = true;
 
-            //SAVE to LOG the Generated Source Code (If you want to monitor the results of the generator without debugging it)
+            //SAVE to LOG the Generated Source Code(If you want to monitor the results of the generator without debugging it)
+
+            saveLogToFile($@"SOURCE CODE ADDED:" + SourceText.From(source, Encoding.UTF8).ToString() + "\r\n" + "\r\n");
+
+
             //File.AppendAllText($@"{SaveFilePath()}{"MasterLog"}",
-           //  "SOURCE:" + SourceText.From(source, Encoding.UTF8).ToString() + "\r\n" + "\r\n");
+            // "SOURCE:" + SourceText.From(source, Encoding.UTF8).ToString() + "\r\n" + "\r\n");
         }
 
         if (!sourceAdded)
@@ -272,6 +358,7 @@ public class OnReadySourceGenerator : ISourceGenerator
         }
     }
 
+
     /// <summary>
     /// Generates the code for the OnReady extension method for the given class.
     /// </summary>
@@ -284,13 +371,13 @@ public class OnReadySourceGenerator : ISourceGenerator
                 using Godot;
                 using System;
 
-                    partial class {className}
+                    partial class {className}: OnReadyInterface.IOnReady
                     {{
                         public void OnReady(Godot.Node node)
                         {{
                             if (node is {className} myNode)
                             {{
-                                {allFieldDelcarations}
+                                    {allFieldDelcarations}
                             }}
                         }}
                     }}
