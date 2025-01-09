@@ -21,7 +21,7 @@ public class CodeToCopy:Node
 
     public override void _Notification(int what) => this.OnReady(this);
 
-    private void OnReady(CodeToCopy codeToCopy)
+    private void OnReady(Node node)
     {
         throw new NotImplementedException();
     }

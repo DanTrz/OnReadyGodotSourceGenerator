@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
@@ -6,25 +7,6 @@ using Mono.Cecil.Cil;
 
 class ILWeaver
 {
-    public static string GodotTempcopyAssemblyPath()
-    {
-        string godotSourceAssemblyPath = @"C:\Local Documents\Development\Godot\Source Generator Tests\OnReadyGodotSourceGenerator\samplegodotproject_onreadysourcegenerator\.godot\mono\temp\bin\Debug\SampleGodotProject_OnReadySourceGenerator.dll";
-        string tempAssemblyPath = @"C:\Local Documents\Development\Godot\Source Generator Tests\OnReadyGodotSourceGenerator\samplegodotproject_onreadysourcegenerator\.godot\mono\temp\bin\Debug\Temp_SampleGodotProject_OnReadySourceGenerator.dll";
-
-        try
-        {
-            File.Copy(godotSourceAssemblyPath, tempAssemblyPath, true);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"////-WEAVER-////Failed to copy the original assembly: {ex.Message}");
-        }
-
-        return tempAssemblyPath;
-
-
-        //return @"C:\Local Documents\Development\Godot\Source Generator Tests\OnReadyGodotSourceGenerator\samplegodotproject_onreadysourcegenerator\.godot\mono\temp\bin\Debug\SampleGodotProject_OnReadySourceGenerator.dll";
-    }
     static void Main(string[] args)
     {
         Console.WriteLine("////-WEAVER-////Weaver Started");
@@ -37,85 +19,36 @@ class ILWeaver
         //Get the path to the executing assembly(the Weaver DLL)
         string sourceAssemblyPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
 
-        //string targetAssemblyPath = args[0];
-        string targetAssemblyPath = @"C:\Local Documents\Development\Godot\Source Generator Tests\OnReadyGodotSourceGenerator\samplegodotproject_onreadysourcegenerator\.godot\mono\temp\bin\Debug\SampleGodotProject_OnReadySourceGenerator.dll";
+        //Get the path to the target assembly (the Godot DLL) - This comes from Project XML settings Exec Command arguments
+        string targetAssemblyPath = args[0]; 
 
-        string tempTargetAssemblyPath = GodotTempcopyAssemblyPath();
+        //Get a temp Assembly path to work with, as we will need to copy the original assembly to a temp location to modify it
+        string tempTargetAssemblyPath = GetTempAssemblyPath(targetAssemblyPath);
 
-        //InjectLogging(assemblyPath);
-        InjectLogging2(targetAssemblyPath, sourceAssemblyPath, tempTargetAssemblyPath);
+        //Start the process to inject code and modify assembly
+        InjectCodeLogic(targetAssemblyPath, sourceAssemblyPath, tempTargetAssemblyPath);
     }
-
-    static void CopyModifiedDll(string tempAssemblyPath, string targetAssemblyPath)
-    {
-
-        Console.WriteLine($"////-WEAVER-////Started Trying to Modify Godot DLL: {targetAssemblyPath}");
-        int retries = 20;
-        while (retries > 0)
-        {
-            try
-            {
-                File.Copy(tempAssemblyPath, targetAssemblyPath, overwrite: true);
-                Console.WriteLine($"////-WEAVER-////Successfully copied the modified assembly to: {targetAssemblyPath}");
-                return;
-            }
-            catch (IOException ex)
-            {
-                Console.WriteLine($"////-WEAVER-////Failed to copy assembly. Retrying... ({retries} attempts left)");
-                Console.WriteLine(ex.Message);
-                retries--;
-                Thread.Sleep(500);  // Wait for 500ms before retrying
-            }
-        }
-
-        Console.WriteLine("////-WEAVER-////Failed to copy the modified assembly after several attempts.");
-    }
-
-    public static void ProcessCurrentAssembly()
-    {
-        // Get the path to the executing assembly (the Weaver DLL)
-        string assemblyPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-
-        // Load the assembly using Mono.Cecil
-        var assembly = AssemblyDefinition.ReadAssembly(assemblyPath);
-
-        Console.WriteLine($"////-WEAVER-////-CURRENT => Loaded Assembly: {assembly.Name}");
-
-        // Example: List all types in the assembly
-        foreach (var type in assembly.MainModule.Types)
-        {
-            Console.WriteLine($"////-WEAVER-////-CURRENT =>Type: {type.FullName}");
-
-            // Example: List methods for each type
-            foreach (var method in type.Methods)
-            {
-                Console.WriteLine($"////-WEAVER-////-CURRENT =>  Method: {method.Name}");
-            }
-        }
-
-        // Perform modifications or analysis...
-        // e.g., Modify or add a method, copy it to another DLL, etc.
-
-        // Save changes back if needed (e.g., overwrite the DLL)
-        // assembly.Write(assemblyPath);
-    }
-
-
-    static void InjectLogging2(string targetAssemblyPath, string sourceAssemblyPath, string tempTargetAssemblyPath)
+    
+    static void InjectCodeLogic(string targetAssemblyPath, string sourceAssemblyPath, string tempTargetAssemblyPath)
     {
         // Load the source and target assemblies
-        var sourceAssembly = ModuleDefinition.ReadModule(sourceAssemblyPath);
-        var tempTargetAssembly = ModuleDefinition.ReadModule(tempTargetAssemblyPath);
+        var sourceAssembly = ModuleDefinition.ReadModule(sourceAssemblyPath); //This the ILWeaver DLL
+        var tempTargetAssembly = ModuleDefinition.ReadModule(tempTargetAssemblyPath); //This the Godot DLL
 
         Console.WriteLine($"////-WEAVER-//// Original Target: {targetAssemblyPath}");
         Console.WriteLine($"////-WEAVER-//// Temp Target: {tempTargetAssemblyPath}");
         Console.WriteLine($"////-WEAVER-//// Source: {sourceAssemblyPath}");
 
-        // Get the source method
+        // Get the source method in the source assembly
         var sourceAssemblyType = sourceAssembly.Types.FirstOrDefault(t => t.Methods.Any(m => m.Name == "TestMethodSource"));
         var sourceMethod = sourceAssemblyType.Methods.First(m => m.Name == "TestMethodSource");
 
-        // Find the target method in the target assembly
+        if (sourceMethod == null)
+        {
+            throw new Exception("////-WEAVER-//// Source method not found in the target assembly.");
+        }
+
+        // Get the target method in the target assembly
         var targetType = tempTargetAssembly.Types.FirstOrDefault(t => t.Methods.Any(m => m.Name == "TestMethod"));
         var targetMethod = targetType.Methods.First(m => m.Name == "TestMethod");
 
@@ -132,7 +65,9 @@ class ILWeaver
 
         // Copy the method body from the source method
         var sourceBody = sourceMethod.Body;
-        var ilProcessor = targetBody.GetILProcessor();
+
+        //ILProcessor is used internally to modify the method bodies of the assembly before saving it
+        var ilProcessor = targetBody.GetILProcessor(); //Here we tell what element it shoudl modify - IN this case the targetBody in the tempTargetAssembly
         var instructionMap = new Dictionary<Instruction, Instruction>();
 
         // Copy variables
@@ -141,9 +76,9 @@ class ILWeaver
             var importedVariableType = tempTargetAssembly.ImportReference(variable.VariableType);
             targetBody.Variables.Add(new VariableDefinition(importedVariableType));
         }
-        Console.WriteLine($"////-WEAVER-//// Variables Copied");
+        Console.WriteLine($"////-WEAVER-//// Step 1: Variables Copied");
 
-        // Copy instructions
+        // Copy instructions from the source method to the target method
         foreach (var instruction in sourceBody.Instructions)
         {
             var newInstruction = instruction.Operand switch
@@ -157,12 +92,13 @@ class ILWeaver
                 null => Instruction.Create(instruction.OpCode),
                 _ => throw new NotSupportedException($"////-WEAVER-//// Unsupported operand type: {instruction.Operand?.GetType().FullName}")
             };
-            Console.WriteLine($"////-WEAVER-//// instructions Copied");
-
+            
+            //When using the Processor (iLProcessor) we are modifing the assembly already directly. 
             ilProcessor.Append(newInstruction);
             instructionMap[instruction] = newInstruction; // Map old instructions to new ones for branch fixups
-            Console.WriteLine($"////-WEAVER-//// instructions mapped");
+            
         }
+        Console.WriteLine($"////-WEAVER-//// Step 2: instructions copied and mapped");
 
         // -Fix branch instructions and exception handlers
         foreach (var instruction in targetBody.Instructions)
@@ -190,190 +126,46 @@ class ILWeaver
                 FilterStart = handler.FilterStart == null ? null : instructionMap[handler.FilterStart]
             });
         }
-        Console.WriteLine($"////-WEAVER-//// instructions exception handlers done");
+        Console.WriteLine($"////-WEAVER-//// Step 3: instructions exception handlers done");
 
-        // Save the modified assembly to the target path
+        // Save the modified assembly to the target path (overwriting the original assembly)
         tempTargetAssembly.Write(targetAssemblyPath);
 
-        Console.WriteLine($"////-WEAVER-//// SUCCESS: saved the modified assembly to: {targetAssemblyPath}");
+        Console.WriteLine($"////-WEAVER-//// Step 4: SUCCESS: saved the modified assembly to: {targetAssemblyPath}");
 
         //printCodeOutput(targetAssemblyPath, "SampleScene", "TestMethod");
     }
 
-
-
-    static void InjectLogging(string targetAssemblyPath)
+    public static string GetTempAssemblyPath(string godotDllPath)
     {
-        Console.WriteLine($"////-WEAVER-////Weaving assembly: {targetAssemblyPath}");
+        //TODO CHANGE THIS - THIS IS HARDCODED PATHS
+        //string godotSourceAssemblyPath = @"C:\Local Documents\Development\Godot\Source Generator Tests\OnReadyGodotSourceGenerator\samplegodotproject_onreadysourcegenerator\.godot\mono\temp\bin\Debug\SampleGodotProject_OnReadySourceGenerator.dll";
+        string godotOriginalAssemblyPath = godotDllPath;
 
-        // Load the target assembly (the Godot project DLL)
-        //var assembly = AssemblyDefinition.ReadAssembly(assemblyPath); // Previous version
-        //var assembly = ModuleDefinition.ReadModule(assemblyPath); // New version
-
-
-        //ProcessCurrentAssembly();//Code to read the current assembly DLL
-
-        // Get the path to the executing assembly (the Weaver DLL)
-        string sourceAssemblyPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-
-        // Load the assembly using Mono.Cecil
-        var sourceAssembly = ModuleDefinition.ReadModule(sourceAssemblyPath);
-
-        var sourceAssemblyTypes = sourceAssembly.Types.FirstOrDefault(t => t.Methods.Any(m => m.Name == "TestMethodSource"));
-
-        Console.WriteLine($"////-WEAVER-//// SOURCE FOUND : {sourceAssemblyTypes.Methods.First(m => m.Name == "TestMethodSource").FullName}");
-
-        var sourceMethod = sourceAssemblyTypes.Methods.First();
-
-
-        using (var targetAssemblyModule = ModuleDefinition.ReadModule(targetAssemblyPath, new ReaderParameters { ReadWrite = true }))
+        if (string.IsNullOrEmpty(godotOriginalAssemblyPath))
         {
-            foreach (var appModuleType in targetAssemblyModule.Types)
-            {
-                Console.WriteLine($"////-WEAVER-//// Type _ClassName_ : {appModuleType.FullName}");
-
-                foreach (var methods in appModuleType.Methods)
-                {
-                    //Console.WriteLine($"////-WEAVER-////  _Methods_List): {methods.FullName}");
-
-                    if (methods.Name == "TestMethod")
-                    {
-                        Console.WriteLine($"////-WEAVER-//// Method Found: {methods.FullName}");
-                    }
-                }
-            }
-
-
-            //var targetTypes = assembly.Types.Where(t => t.Methods.Any(m => m.Name == "TestMethod"));
-            var targetTypes = targetAssemblyModule.Types.FirstOrDefault(t => t.Methods.Any(m => m.Name == "TestMethod"));
-
-            var targetMethod = targetTypes.Methods.First();
-
-            var processor = targetMethod.Body.GetILProcessor();
-            processor.Clear();
-
-            foreach (var instruction in sourceMethod.Body.Instructions)
-            {
-                processor.Append(instruction);
-            }
-
-            // Modify the assembly directly
-            targetAssemblyModule.Write(); // Write to the same file that was used to open the file
-
-
-
-
-
-
-
-
-
-            //// Generate a temporary path to save the modified module
-            //var tempAssemblyPath2 = $"{Path.GetDirectoryName(targetAssemblyPath)}\\Temp_{Path.GetFileName(targetAssemblyPath)}";
-
-            //// Save the modified module to the temporary path
-            //targetAssemblyModule.Write(tempAssemblyPath2);
-
-
-
-            ////var targetTypes = assembly.Types.Where(t => t.Methods.Any(m => m.Name == "TestMethod"));
-            //var targetTypes = targetAssemblyModule.Types.FirstOrDefault(t => t.Methods.Any(m => m.Name == "TestMethod"));
-
-            //var targetMethod = targetTypes.Methods.First();
-
-            //var processor = targetMethod.Body.GetILProcessor();
-            //processor.Append(processor.Create(OpCodes.Ldstr, "Hello, World!"));
-
-            //// Modify the assembly directly
-            //targetAssemblyModule.Write(); // Write to the same file that was used to open the file
-            ////CopyModifiedDll(tempAssemblyPath2, assemblyPath);
+            Console.WriteLine($"////-WEAVER-////Failed to get the path to the original assembly");
         }
 
+        string godotAssemblyFileName = Path.GetFileName(godotOriginalAssemblyPath);
+        string godotAssemblydirectory = Path.GetDirectoryName(godotOriginalAssemblyPath);
+        string tempAssemblyPath = godotAssemblydirectory + "\\tempAssembly.dll";
 
-        //foreach (var appModuleType in assembly.Types)
-        //{
-        //    Console.WriteLine($"////-WEAVER-//// Type _ClassName_ : {appModuleType.FullName}");
+        //string tempAssemblyPath = @"C:\Local Documents\Development\Godot\Source Generator Tests\OnReadyGodotSourceGenerator\samplegodotproject_onreadysourcegenerator\.godot\mono\temp\bin\Debug\Temp_SampleGodotProject_OnReadySourceGenerator.dll";
 
-        //    foreach (var methods in appModuleType.Methods)
-        //    {
-        //        //Console.WriteLine($"////-WEAVER-////  _Methods_List): {methods.FullName}");
+        try
+        {
+            File.Copy(godotOriginalAssemblyPath, tempAssemblyPath, true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"////-WEAVER-////Failed to copy the original assembly: {ex.Message}");
+        }
 
-        //        if (methods.Name == "TestMethod")
-        //        {
-        //            Console.WriteLine($"////-WEAVER-//// Method Found: {methods.FullName}");
-        //        }
-        //    }
-        //}
-
-
-        ////var targetTypes = assembly.Types.Where(t => t.Methods.Any(m => m.Name == "TestMethod"));
-        //var targetTypes = assembly.Types.FirstOrDefault(t => t.Methods.Any(m => m.Name == "TestMethod"));
-
-        //var targetMethod = targetTypes.Methods.First();
-
-        ////var processor = targetMethod.Body.GetILProcessor();
-        ////processor.Append(processor.Create(OpCodes.Ldstr, "Hello, World!"));
-
-        //SECTION1
-        //// Generate a temporary path to save the modified module
-        //var tempAssemblyPath = $"{Path.GetDirectoryName(assemblyPath)}\\Temp_{Path.GetFileName(assemblyPath)}";
-
-        //// Save the modified module to the temporary path
-        //assembly.Write(tempAssemblyPath);
-        //Console.WriteLine($"////-WEAVER-//// Writting to Temp Path {tempAssemblyPath}");
-
-        //// Now copy the modified assembly to the Godot project
-        //CopyModifiedDll(tempAssemblyPath, assemblyPath);
-
-        //SECTION1END
-
-        //// Optionally, copy the modified file back to the original location
-        //try
-        //{
-        //    File.Copy(tempAssemblyPath, assemblyPath, true);
-        //    File.Delete(tempAssemblyPath); // Delete temporary file if not needed
-        //    Console.WriteLine("////-WEAVER-////Successfully replaced the original assembly with the modified version.");
-        //}
-        //catch (Exception ex)
-        //{
-        //    Console.WriteLine($"////-WEAVER-////Failed to replace the original assembly: {ex.Message}");
-        //}
+        return tempAssemblyPath;
 
 
-
-
-        //assembly.Write(assemblyPath);
-
-
-        //Console.WriteLine($"////-WEAVER-//// Target Size: {targetTypes.Count}");
-
-        //foreach (var methods in targetTypes)
-        //{
-        //    Console.WriteLine($"////-WEAVER-//// Method Found: {methods.FullName}");
-        //}
-
-        //    //OLDER VERSION OF CODE///
-        //    // Try to resolve the Godot.GD.Print method dynamically
-        //    var godotGDPrintMethod = ResolveGodotPrintMethod(assembly);
-        //    if (godotGDPrintMethod == null)
-        //    {
-        //        Console.WriteLine("////-WEAVER-////Failed to resolve Godot.GD.Print method. Is the Godot assembly referenced?");
-        //        return;
-        //    }
-
-        //    // Iterate through all types and methods in the module
-        //    foreach (var type in assembly.Types)
-        //    {
-        //        foreach (var method in type.Methods)
-        //        {
-        //            // Only modify _Ready methods
-        //            if (method.Name == "_Ready" && method.HasBody)
-        //            {
-        //                Console.WriteLine($"////-WEAVER-////Injecting into _Ready method in {type.Name}");
-
-        //                var processor = method.Body.GetILProcessor();
-
-
+        //return @"C:\Local Documents\Development\Godot\Source Generator Tests\OnReadyGodotSourceGenerator\samplegodotproject_onreadysourcegenerator\.godot\mono\temp\bin\Debug\SampleGodotProject_OnReadySourceGenerator.dll";
     }
 
     public static void printCodeOutput(string assemblyToReadPath, string className, string methodName)

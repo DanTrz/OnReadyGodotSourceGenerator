@@ -13,10 +13,7 @@
 	</ItemGroup>
 	
 
-	<Target Name="PostBuild" AfterTargets="Build">
-		<Message Importance="high" Text="ILWeaver should be running now..." />
-		<Exec Command="dotnet &quot;$(TargetPath)&quot;  &quot;$(TargetPath)&quot;" />
-	</Target>
+
 
 
 </Project>
