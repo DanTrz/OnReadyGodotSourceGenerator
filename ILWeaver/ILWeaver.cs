@@ -90,7 +90,7 @@ class ILWeaver
                 VariableDefinition varDef => Instruction.Create(instruction.OpCode, targetBody.Variables[varDef.Index]),
                 string str => Instruction.Create(instruction.OpCode, str),
                 null => Instruction.Create(instruction.OpCode),
-                _ => throw new NotSupportedException($"////-WEAVER-//// Unsupported operand type: {instruction.Operand?.GetType().FullName}")
+                _ => throw new NotSupportedException($"////-WEAVER-//// Unsupported operand type instruction: {instruction.ToString()} Operand: {instruction.Operand?.GetType().FullName}")
             };
             
             //When using the Processor (iLProcessor) we are modifing the assembly already directly. 
@@ -133,7 +133,7 @@ class ILWeaver
 
         Console.WriteLine($"////-WEAVER-//// Step 4: SUCCESS: saved the modified assembly to: {targetAssemblyPath}");
 
-        //printCodeOutput(targetAssemblyPath, "SampleScene", "TestMethod");
+        printCodeOutput(targetAssemblyPath, "SampleScene", "TestMethod");
     }
 
     public static string GetTempAssemblyPath(string godotDllPath)

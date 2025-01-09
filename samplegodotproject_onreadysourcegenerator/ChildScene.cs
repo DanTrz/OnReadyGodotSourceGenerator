@@ -22,9 +22,11 @@ public partial class ChildScene : Control
     //[OnReady("$")] private SampleScene _myOwner = GetOwner<SampleScene>(); 
 
 
+    //public override void _Notification(int what) => this.OnReady(this);
 
     public override void _Ready()
     {
+        this.OnReady(this);
         _myLabelFromChildScene.Text = "Initiated via OnReady - Working - Label from ChildScene";
 
         //_myOwner = GetOwner<SampleScene>();

@@ -14,14 +14,14 @@ public partial class GlobalAutoLoad : Node
     // Make sure you are EITHER using the AUtoLoad or the OnReady method within _Ready of the scripts
     public override void _Ready()
     {
-        // Listen for new nodes added to the scene tree
-        GetTree().NodeAdded += OnNodeAdded;
+        //// Listen for new nodes added to the scene tree
+        //GetTree().NodeAdded += OnNodeAdded;
 
-        //Resolver needs to be executed for all nodes already in the scene tree(auto - load nodes)
-        foreach (var node in GetTree().Root.GetChildren())
-            {
-                OnNodeAdded(node);
-            }
+        ////Resolver needs to be executed for all nodes already in the scene tree(auto - load nodes)
+        //foreach (var node in GetTree().Root.GetChildren())
+        //    {
+        //        OnNodeAdded(node);
+        //    }
     }
 
     // Cache dictionary for MethodInfo

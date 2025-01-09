@@ -54,6 +54,8 @@ public partial class SampleScene : Node2D
 
     public override void _Ready()
     {
+       
+        this.OnReady(this);
         TestMethod();
 
         //_myParent = GetParent<Node>();
