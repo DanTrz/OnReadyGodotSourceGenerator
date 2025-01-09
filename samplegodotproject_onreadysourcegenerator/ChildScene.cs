@@ -21,7 +21,7 @@ public partial class ChildScene : Control
     //public string _myString => this.GetOwner();
     //[OnReady("$")] private SampleScene _myOwner = GetOwner<SampleScene>(); 
 
-
+    public override void _Notification(int what) => this.OnReady(this);
 
     public override void _Ready()
     {

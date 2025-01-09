@@ -38,10 +38,6 @@ public partial class SampleScene : Node2D
     //[OnReady("$")] private SampleScene _myOwner = GetOwner<SampleScene>(); 
 
 
-
-    //public override void _Notification(int what) => this.OnReady(this);
-
-
     public void TestMethod()
     {
         GD.Print("OriginalContent");

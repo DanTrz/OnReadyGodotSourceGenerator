@@ -10,16 +10,19 @@ using Godot;
 public class CodeToCopy:Node
 {
 
-    public void TestMethodSource()
-    { 
-        GD.Print("!!!!GD PRINT CODE ->>>> WEAVER CREATED WORKING Copied from TestMethodSource");
+    //public void TestMethodSource()
+    //{ 
+    //    GD.Print("!!!!GD PRINT CODE ->>>> WEAVER CREATED WORKING Copied from TestMethodSource");
 
-        GD.Print("!!!!CODE 2 -> GD PRINT CODE ->>>> WEAVER CREATED WORKING Copied from TestMethodSource");
+    //    GD.Print("!!!!CODE 2 -> GD PRINT CODE ->>>> WEAVER CREATED WORKING Copied from TestMethodSource");
 
-        
+
+    //}
+
+    public override void _Notification(int what)
+    {
+        this.OnReady(this);
     }
-
-    public override void _Notification(int what) => this.OnReady(this);
 
     private void OnReady(Node node)
     {
