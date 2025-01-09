@@ -6,7 +6,14 @@ using System.Diagnostics;
 using System.Linq;
 using Godot;
 
-public static class GD
+
+/// <summary>
+/// Custom Static Class that Receives Godot.GD calls and forwards them to VisualStudio Debuger (console) and Godot.GD class.
+/// Comment this out, or change the Class name to GD to use the original Godot.GD class.
+/// To enable VisualStudio 2022 Debugger, rename this class to "GD".
+/// To disable VisualStudio 2022 Debugger, rename this class to "GD_LogDisable" (Or any other name except "GD").
+/// </summary>
+public static class GD_LogDisable
 {
     private static bool IsVisualStudio2022()
     {

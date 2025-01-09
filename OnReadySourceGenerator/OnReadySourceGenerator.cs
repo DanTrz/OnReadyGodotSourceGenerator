@@ -116,18 +116,6 @@ public class OnReadySourceGenerator : ISourceGenerator
     /// <param name="context">The context of the source generator.</param>
     public void Execute(GeneratorExecutionContext context)
     {
-        //OnReadySyntaxReceiver receiver = null;
-
-        ////Retrieve the syntax receiver and checks only for the OnReadySyntaxReceiver (that's the one we want)
-        //if (context.SyntaxReceiver is OnReadySyntaxReceiver OnReadyReceiver)
-        //{
-        //    receiver = (OnReadySyntaxReceiver)OnReadyReceiver;
-        //}
-        //else if (context.SyntaxReceiver is OnReadyCallableSyntaxReceiver onReadyCallableReceiver)
-        //{
-        //    receiver = (OnReadyCallableSyntaxReceiver)onReadyCallableReceiver as ;
-        //}
-
         if (context.SyntaxReceiver is not OnReadySyntaxReceiver receiver) return;
 
         //If no fields with Onready attributes are found, we return a warning message
