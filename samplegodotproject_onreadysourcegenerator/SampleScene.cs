@@ -48,6 +48,8 @@ public partial class SampleScene : Node2D
 
     }
 
+    public override void _Notification(int what) => this.OnReady(this);
+
     public override void _Ready()
     {
         TestMethod();

@@ -13,8 +13,8 @@
 	<Target Name="PostBuild" AfterTargets="Build">
 		<Message Importance="high" Text="ILWeaver should be running now..." />
 		<Message Importance="high" Text="TargetPath: $(TargetPath)" />
-		<Exec Command="dotnet run --project &quot;..\ILWeaver\ILWeaver.csproj&quot; &quot;$(TargetPath)&quot;" />
-	</Target>
+		<Exec Command="dotnet run --project &quot;..\ILWeaver\ILWeaver.csproj&quot; &quot;$(TargetPath)&quot; " />
+  </Target>
 
 
 

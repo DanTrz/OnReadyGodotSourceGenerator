@@ -6,7 +6,7 @@ public partial class ChildScene : Control
 {
 
     [OnReady("LabelFromChildScene")] private Label _myLabelFromChildScene;
-    [OnReady("%Sprite2D")] private Sprite2D _mySprite2D;
+    //[OnReady("%Sprite2D")] private Sprite2D _mySprite2D;
 
     //public override void _Notification(int what) => this.OnReady(this);
 

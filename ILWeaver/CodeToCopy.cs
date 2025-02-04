@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Godot;
 
 
-public class CodeToCopy:Node
+public class CodeToCopy : Node
 {
 
     //public void TestMethodSource()
@@ -21,6 +21,7 @@ public class CodeToCopy:Node
 
     public override void _Notification(int what)
     {
+        GD.Print("!!!!GD PRINT CODE NOTIFICATION ->>>> WEAVER CREATED WORKING from _Notification");
         this.OnReady(this);
     }
 

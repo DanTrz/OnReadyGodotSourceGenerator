@@ -37,7 +37,7 @@ layout_mode = 2
 text = "Node not initiated - Not Unique Name "
 script = ExtResource("2_qbg2j")
 
-[node name="SeparateScene" parent="CanvasLayer/PanelContainer/VBoxContainer" instance=ExtResource("2_qdihn")]
+[node name="ChildScene" parent="CanvasLayer/PanelContainer/VBoxContainer" instance=ExtResource("2_qdihn")]
 layout_mode = 2
 
 [node name="Sprite2D" type="Sprite2D" parent="."]

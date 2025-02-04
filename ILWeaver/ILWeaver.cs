@@ -6,6 +6,7 @@ using Mono.Cecil.Cil;
 using System.Diagnostics;
 using Godot;
 using Godot.NativeInterop;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 
 class ILWeaver
@@ -30,7 +31,7 @@ class ILWeaver
         string tempTargetAssemblyPath = GetTempAssemblyPath(targetAssemblyPath);
 
         //Start the process to inject code and modify assembly
-        InjectCodeLogic(targetAssemblyPath, sourceAssemblyPath, tempTargetAssemblyPath);
+        // InjectCodeLogic(targetAssemblyPath, sourceAssemblyPath, tempTargetAssemblyPath);
     }
 
     static void InjectCodeLogic(string targetAssemblyPath, string sourceAssemblyPath, string tempTargetAssemblyPath)
@@ -38,6 +39,9 @@ class ILWeaver
         // Load the source and target assemblies
         var sourceAssembly = ModuleDefinition.ReadModule(sourceAssemblyPath); //This the ILWeaver DLL
         var tempTargetAssembly = ModuleDefinition.ReadModule(tempTargetAssemblyPath); //This the Godot DLL
+        var godotSharpASsembly = ModuleDefinition.ReadModule(@"C:\Local Documents\Development\Godot\Source Generator Tests\OnReadyGodotSourceGenerator\samplegodotproject_onreadysourcegenerator\.godot\mono\temp\bin\Debug\GodotSharp.dll"); //This the Godot DLL
+
+
 
         Console.WriteLine($"////-WEAVER-//// Original Target: {targetAssemblyPath}");
         Console.WriteLine($"////-WEAVER-//// Temp Target: {tempTargetAssemblyPath}");
@@ -59,7 +63,7 @@ class ILWeaver
         var targetType = tempTargetAssembly.Types.FirstOrDefault(t => t.Methods.Any(m => m.Name == "TestMethod"));
         var targetMethod = targetType.Methods.First(m => m.Name == "TestMethod");
 
-   
+
         // Get the target method in the target assembly
         var targetTypeClasses = tempTargetAssembly.Types
             .Where(myClass => myClass.IsClass &&
@@ -114,22 +118,28 @@ class ILWeaver
         // Indicate the method overrides a base method
         //newMethod.Overrides.Add(Godot.GodotObject.MethodName._Notification);
 
-        Godot.GodotObject tempObject = new Godot.GodotObject();
-        Type nodeType = tempObject.GetType();
+        var baseTarget = godotSharpASsembly.Types.FirstOrDefault(t => t.Methods.Any(m => m.Name == "_Notification"));
+        //var sourceMethod = sourceAssemblyType.Methods.First(m => m.Name == "TestMethodSource");
+        var baseMethod = baseTarget.Methods.First(m => m.Name == "_Notification");
 
-        // Get the base type of the class (e.g., Node)
-        Type baseType = nodeType.BaseType;
+        // Godot.GodotObject tempObject = new Godot.GodotObject();
+        // Type nodeType = tempObject.GetType();
+
+        // // Get the base type of the class (e.g., Node)
+        // Type baseType = nodeType.BaseType;
 
         // Find the base method (_Notification) in the base type (e.g., Node)
-        var godotMethodType = baseType.GetMethod("_Notification");
+        // var godotMethodType = baseType.GetMethod("_Notification");
 
-        if (godotMethodType != null)
+        if (baseMethod != null)
         {
             // Import the base method (MethodReference) into the current module
-            var baseMethodReference = testTargetClass.Module.ImportReference(godotMethodType);
+            var baseMethodReference = testTargetClass.Module.ImportReference(baseMethod);
 
             // Add the base method reference to the new method's overrides collection
             newMethod.Overrides.Add(baseMethodReference);
+
+            Console.WriteLine("////WEAVING///// Base method '_Notification' found sucessfully.");
         }
         else
         {
